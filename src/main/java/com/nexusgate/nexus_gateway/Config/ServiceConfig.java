@@ -7,5 +7,6 @@ public class ServiceConfig {
 
     private String url;
     private String path;
+    private ManagementServiceConfig management;
 
 }
