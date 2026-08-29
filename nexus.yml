@@ -24,3 +24,15 @@ management:
   endpoints:
     - health
     - info
+
+security:
+  jwt:
+    enabled: true
+    algorithm: HS256
+
+    verification:
+      type: shared-secret
+      secret: ${JWT_SECRET}
+
+    issuer: http://localhost:8081
+    audience: nexusgate

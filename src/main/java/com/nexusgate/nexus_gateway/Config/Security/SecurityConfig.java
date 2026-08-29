@@ -1,7 +1,8 @@
-package com.nexusgate.nexus_gateway.Config;
+package com.nexusgate.nexus_gateway.Config.Security;
 
-import com.nexusgate.nexus_gateway.Config.Security.JwtConfig;
+import lombok.Data;
 
+@Data
 public class SecurityConfig {
 
     private JwtConfig jwt;

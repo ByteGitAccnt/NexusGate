@@ -4,7 +4,6 @@ import org.springframework.stereotype.Component;
 import org.yaml.snakeyaml.Yaml;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
@@ -12,17 +11,32 @@ import java.nio.file.Path;
 public class NexusConfigLoader {
 
     private final Path configPath = Path.of("nexus.yml");
+    private final EnvironmentVariableResolver environmentResolver;
+
+    public NexusConfigLoader(EnvironmentVariableResolver environmentResolver) {
+        this.environmentResolver = environmentResolver;
+    }
 
     public NexusConfig load() {
-        try (InputStream inputStream = Files.newInputStream(configPath)) {
-
+        try {
+            String yamlContent = Files.readString(configPath);
+            String resolvedYaml = environmentResolver.resolve(yamlContent);
             Yaml yaml = new Yaml();
-
-            return yaml.loadAs(inputStream, NexusConfig.class);
+            NexusConfig config = yaml.loadAs(resolvedYaml, NexusConfig.class);
+            System.out.println(
+                    "JWT secret resolved: " +
+                            !config.getSecurity()
+                                    .getJwt()
+                                    .getVerification()
+                                    .getSecret()
+                                    .equals("${JWT_SECRET}")
+            );
+            return config;
 
         } catch (IOException e) {
             throw new IllegalStateException(
-                    "Failed to load NexusGate configuration: " + configPath,
+                    "Failed to load NexusGate configuration: "
+                            + configPath,
                     e
             );
         }

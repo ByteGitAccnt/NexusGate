@@ -1,5 +1,6 @@
 package com.nexusgate.nexus_gateway.Config;
 
+import com.nexusgate.nexus_gateway.Config.management.ManagementConfig;
 import org.springframework.cloud.gateway.route.RouteDefinition;
 import org.springframework.cloud.gateway.handler.predicate.PredicateDefinition;
 import org.springframework.cloud.gateway.filter.FilterDefinition;
