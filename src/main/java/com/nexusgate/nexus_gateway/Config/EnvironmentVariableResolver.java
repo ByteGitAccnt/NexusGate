@@ -8,7 +8,7 @@ import java.util.regex.Pattern;
 
 @Component
 public class EnvironmentVariableResolver {
-
+//replace all the string/values that match with starting $ with actual env values from the system
     private static final Pattern ENV_PATTERN = Pattern.compile("\\$\\{([A-Za-z_][A-Za-z0-9_]*)}");
 
     public String resolve(String content) {

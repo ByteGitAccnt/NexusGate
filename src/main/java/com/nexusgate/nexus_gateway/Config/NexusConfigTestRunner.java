@@ -17,23 +17,22 @@ public class NexusConfigTestRunner implements CommandLineRunner {
 
         NexusConfig config = configLoader.load();
 
-       /* System.out.println("Global management endpoints: "
-                + config.getManagement().getEndpoints());*/
+       System.out.println("Global management endpoints: " + config.getManagement().getEndpoints());
 
-        config.getServices().forEach((name, service) -> {
+       config.getServices().forEach((name, service) -> {
 
-            /*System.out.println(
+            System.out.println(
                     name + " -> " +
                             service.getUrl() + " -> " +
                             service.getPath()
             );
-*/
-            /*if (service.getManagement() != null) {
+
+            if (service.getManagement() != null) {
                 System.out.println(
                         "  Override: " +
                                 service.getManagement().getEndpoints()
                 );
-            }*/
-        });
+            }
+       });
     }
 }
