@@ -17,10 +17,9 @@ public class NexusConfigTestRunner implements CommandLineRunner {
 
         NexusConfig config = configLoader.load();
 
-        System.out.println("Global management endpoints: "
-                + config.getManagement().getEndpoints());
+       System.out.println("Global management endpoints: " + config.getManagement().getEndpoints());
 
-        config.getServices().forEach((name, service) -> {
+       config.getServices().forEach((name, service) -> {
 
             System.out.println(
                     name + " -> " +
@@ -34,6 +33,6 @@ public class NexusConfigTestRunner implements CommandLineRunner {
                                 service.getManagement().getEndpoints()
                 );
             }
-        });
+       });
     }
 }

@@ -1,5 +1,7 @@
 package com.nexusgate.nexus_gateway.Config;
 
+import com.nexusgate.nexus_gateway.Config.management.ManagementConfig;
+import com.nexusgate.nexus_gateway.Filter.JwtAuthenticationFilter;
 import org.springframework.cloud.gateway.route.RouteDefinition;
 import org.springframework.cloud.gateway.handler.predicate.PredicateDefinition;
 import org.springframework.cloud.gateway.filter.FilterDefinition;
@@ -11,8 +13,6 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-
-
 
 @Component
 public class NexusRouteBuilder implements RouteDefinitionLocator {
@@ -28,8 +28,12 @@ public class NexusRouteBuilder implements RouteDefinitionLocator {
 
         NexusConfig config = configLoader.load();
         List<RouteDefinition> routes = new ArrayList<>();
+        // JWT authentication filter
+        FilterDefinition jwtFilter = new FilterDefinition();
+        jwtFilter.setName("JwtAuthenticationFilter");
 
-        for (Map.Entry<String, ServiceConfig> entry : config.getServices().entrySet()) {
+        for (Map.Entry<String, ServiceConfig> entry :
+                config.getServices().entrySet()) {
 
             String serviceName = entry.getKey();
             ServiceConfig service = entry.getValue();
@@ -41,19 +45,35 @@ public class NexusRouteBuilder implements RouteDefinitionLocator {
             apiRoute.setUri(URI.create(service.getUrl()));
 
             PredicateDefinition apiPredicate = new PredicateDefinition();
-
             apiPredicate.setName("Path");
             apiPredicate.addArg("pattern", service.getPath());
+
+            System.out.println(
+                    "NexusRouteBuilder: created route -> "
+                            + serviceName
+                            + " | path="
+                            + service.getPath()
+                            + " | uri="
+                            + service.getUrl()
+            );
+
             apiRoute.setPredicates(List.of(apiPredicate));
+            //JWT authentication filter adding to the route
+            apiRoute.setFilters(List.of(jwtFilter));
 
             routes.add(apiRoute);
 
             // Management route
-            if (config.getManagement() != null && config.getManagement().isEnabled()) {
-                List<String> endpoints = resolveManagementEndpoints(config, service);
+            if (config.getManagement() != null
+                    && config.getManagement().isEnabled()) {
+
+                List<String> endpoints =
+                        resolveManagementEndpoints(config, service);
+
                 if (!endpoints.isEmpty()) {
 
-                    RouteDefinition managementRoute = createManagementRoute(
+                    RouteDefinition managementRoute =
+                            createManagementRoute(
                                     config,
                                     serviceName,
                                     service,

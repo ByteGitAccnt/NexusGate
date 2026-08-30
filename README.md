@@ -39,6 +39,7 @@ The gateway is built using **Spring Cloud Gateway** with reactive (WebFlux) prog
   - Order Service (Port 8082)
 - **Actuator Monitoring**: Health, info, and metrics endpoints for operational visibility
 - **YAML Configuration**: Externalized service configuration via `nexus.yml`
+- **For Configuration guidance, see [Configuration Guide](./docs/configuration.md)**
 
 ## 📦 Prerequisites
 
@@ -257,7 +258,7 @@ curl http://localhost:8080/management/actuator/health
   "components": {
     "diskSpace": {
       "status": "UP",
-      "details": { "total": 1000GB, "free": 500GB, "threshold": 10MB }
+      "details": { "total": "1000GB", "free": "500GB", "threshold": "10MB" }
     },
     "livenessState": { "status": "UP" },
     "readinessState": { "status": "UP" }
@@ -347,7 +348,7 @@ src/test/java/com/nexusgate/nexus_gateway/
 #### VS Code
 1. Install "Extension Pack for Java" (by Microsoft)
 2. Open project folder
-3. Terminal → Run Build Task (uses gradle)
+3. Terminal → Run Build Task (uses Gradle)
 
 ### Code Style
 
