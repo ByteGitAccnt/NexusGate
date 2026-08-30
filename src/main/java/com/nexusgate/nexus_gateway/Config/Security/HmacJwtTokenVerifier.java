@@ -47,11 +47,12 @@ public class HmacJwtTokenVerifier implements JwtTokenVerifier {
     @Override
     public Claims verify(String token) {
         try {
-            /*String tokenAlgorithm   = Jwts.parser()
+            /*String tokenAlgorithm = Jwts.parser()
                     .build()
                     .parse(token)
                     .getHeader()
                     .getAlgorithm();
+
             String configuredAlgorithm = jwtConfig.getAlgorithm();
 
             if (!configuredAlgorithm.equals(tokenAlgorithm)) {
