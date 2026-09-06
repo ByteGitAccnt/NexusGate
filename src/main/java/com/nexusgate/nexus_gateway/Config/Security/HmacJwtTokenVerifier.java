@@ -28,10 +28,18 @@ public class HmacJwtTokenVerifier implements JwtTokenVerifier {
                 secret,
                 jwtConfig.getAlgorithm()
         );
-        System.out.println("JWT secret resolved: " + (secret != null));
+
+
+
+
+       /* System.out.println("JWT secret resolved: " + (secret != null));
         System.out.println("Secret length: " + secret.length());
         System.out.println("Configured algorithm: " + jwtConfig.getAlgorithm());
-        System.out.println("Key algorithm: " + secretKey.getAlgorithm());
+        System.out.println("Key algorithm: " + secretKey.getAlgorithm());*/
+
+
+
+
         /*this.jwtConfig = jwtConfig;
         String secret = jwtConfig.getVerification().getSecret();
         this.secretKey = new SecretKeySpec(
@@ -70,12 +78,12 @@ public class HmacJwtTokenVerifier implements JwtTokenVerifier {
 
         } catch (JwtException | IllegalArgumentException e) {
 
-            System.out.println(
+           /* System.out.println(
                     "JWT ERROR TYPE: " + e.getClass().getName()
             );
             System.out.println(
                     "JWT ERROR: " + e.getMessage()
-            );
+            );*/
             throw e;
         }
     }

@@ -2,6 +2,7 @@ package com.nexusgate.nexus_gateway.Config;
 
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
+/*
 
 @Component
 public class NexusConfigTestRunner implements CommandLineRunner {
@@ -26,6 +27,10 @@ public class NexusConfigTestRunner implements CommandLineRunner {
                             service.getUrl() + " -> " +
                             service.getPath()
             );
+            System.out.println(
+                    "  Public endpoints: " +
+                            service.getPublicEndpoints()
+            );
 
             if (service.getManagement() != null) {
                 System.out.println(
@@ -35,4 +40,4 @@ public class NexusConfigTestRunner implements CommandLineRunner {
             }
        });
     }
-}
+}*/
