@@ -5,10 +5,8 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import lombok.Getter;
 import lombok.Setter;
-import lombok.ToString;
 import org.springframework.cloud.gateway.filter.GatewayFilter;
 import org.springframework.cloud.gateway.filter.factory.AbstractGatewayFilterFactory;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.stereotype.Component;
@@ -26,30 +24,11 @@ public class JwtAuthenticationGatewayFilterFactory extends AbstractGatewayFilter
     public JwtAuthenticationGatewayFilterFactory(JwtTokenVerifier tokenVerifier) {
         super(Config.class);
         this.tokenVerifier = tokenVerifier;
-
-        System.out.println(
-                "JWT FACTORY CREATED: " + this.getClass().getName()
-        );
     }
 
     @Override
     public GatewayFilter apply(Config config) {
-
-        System.out.println(
-                "CONFIG CLASS: " + config.getClass().getName()
-        );
-
-        System.out.println(
-                "CONFIG OBJECT: " + config
-        );
         return (exchange, chain) -> {
-            System.out.println(
-                    "JWT FILTER HIT: "
-                            + exchange.getRequest().getMethod()
-                            + " "
-                            + exchange.getRequest().getURI()
-            );
-
 
             String requestPath = exchange.getRequest().getPath().value();
             List<String> publicEndpoints =
@@ -63,40 +42,29 @@ public class JwtAuthenticationGatewayFilterFactory extends AbstractGatewayFilter
             boolean isPublic = publicEndpoints.stream()
                     .anyMatch(relativePath::equals);
 
-            System.out.println("Request path: " + requestPath);
-            System.out.println("Relative path: " + relativePath);
-            System.out.println("Public endpoints: " + publicEndpoints);
-            System.out.println("Is public: " + isPublic);
-
             String authHeader = exchange.getRequest()
                     .getHeaders()
                     .getFirst("Authorization");
 
-            /*System.out.println(
-                    "Authorization header present: "
-                            + (authHeader != null)
-            );*/
             //skips the auth verification
             if (isPublic && authHeader == null) {
-                System.out.println("Authorization header is null");
                 return chain.filter(exchange);
             }
 
             if ( authHeader == null || !authHeader.startsWith("Bearer ")) {
                 exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
-
-                System.out.println("Invalid or missing Authorization header");
                 return exchange.getResponse().setComplete();
             }
 
             String jwtToken = authHeader.substring(7);
             try {
+
+
                 Claims claims = tokenVerifier.verify(jwtToken);
                 // Resolve the configured identity claim
                 String identityClaim = config.getIdentityClaim();
 
                 Object identity = claims.get(identityClaim);
-
                 if (identity == null) {
                     exchange.getResponse()
                             .setStatusCode(HttpStatus.UNAUTHORIZED);

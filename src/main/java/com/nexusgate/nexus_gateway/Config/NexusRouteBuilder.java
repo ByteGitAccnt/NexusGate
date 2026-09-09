@@ -66,21 +66,12 @@ public class NexusRouteBuilder implements RouteDefinitionLocator {
             apiPredicate.setName("Path");
             apiPredicate.addArg("pattern", service.getPath());
 
-            /*System.out.println(
-                    "NexusRouteBuilder: created route -> "
-                            + serviceName
-                            + " | path="
-                            + service.getPath()
-                            + " | uri="
-                            + service.getUrl()
-            );*/
-
             apiRoute.setPredicates(List.of(apiPredicate));
             //JWT authentication filter adding to the route
             apiRoute.setFilters(List.of(jwtFilter));
 
             routes.add(apiRoute);
-            System.out.println("FILTERS: " + apiRoute.getFilters());
+            //System.out.println("FILTERS: " + apiRoute.getFilters());
             // Management route
             if (config.getManagement() != null && config.getManagement().isEnabled()) {
 
