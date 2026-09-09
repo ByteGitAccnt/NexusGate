@@ -1,7 +1,6 @@
 package com.nexusgate.nexus_gateway.Config;
 
 import com.nexusgate.nexus_gateway.Config.management.ManagementConfig;
-import com.nexusgate.nexus_gateway.Filter.JwtAuthenticationFilter;
 import org.springframework.cloud.gateway.route.RouteDefinition;
 import org.springframework.cloud.gateway.handler.predicate.PredicateDefinition;
 import org.springframework.cloud.gateway.filter.FilterDefinition;
@@ -11,6 +10,7 @@ import reactor.core.publisher.Flux;
 
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -28,16 +28,34 @@ public class NexusRouteBuilder implements RouteDefinitionLocator {
 
         NexusConfig config = configLoader.load();
         List<RouteDefinition> routes = new ArrayList<>();
-        // JWT authentication filter
-        FilterDefinition jwtFilter = new FilterDefinition();
-        jwtFilter.setName("JwtAuthenticationFilter");
-
         for (Map.Entry<String, ServiceConfig> entry :
                 config.getServices().entrySet()) {
 
             String serviceName = entry.getKey();
             ServiceConfig service = entry.getValue();
+            // JWT authentication filter
+            FilterDefinition jwtFilter = new FilterDefinition();
+            jwtFilter.setName("JwtAuthentication");// part of naming convention
 
+            // convert the public endpoints to list and feed to the filter args
+            Map<String, String> args = new HashMap<>();
+
+            List<String> publicEndpoints = service.getPublicEndpoints();
+
+            if (publicEndpoints != null && !publicEndpoints.isEmpty()) {
+                args.put("publicEndpoints", String.join(",", publicEndpoints));
+            }
+
+            jwtFilter.setArgs(args);
+            args.put("servicePath", String.join(",", service.getPath().replace("/**", "")));
+            // feeding the identity claim to the jwt filter
+            String identityClaim = config.getSecurity()
+                    .getJwt()
+                    .getIdentityClaim();
+            if (identityClaim == null || identityClaim.isBlank()) {
+                identityClaim = "sub";
+            }
+            args.put("identityClaim", identityClaim);
             // Business API route
             RouteDefinition apiRoute = new RouteDefinition();
 
@@ -48,24 +66,14 @@ public class NexusRouteBuilder implements RouteDefinitionLocator {
             apiPredicate.setName("Path");
             apiPredicate.addArg("pattern", service.getPath());
 
-            System.out.println(
-                    "NexusRouteBuilder: created route -> "
-                            + serviceName
-                            + " | path="
-                            + service.getPath()
-                            + " | uri="
-                            + service.getUrl()
-            );
-
             apiRoute.setPredicates(List.of(apiPredicate));
             //JWT authentication filter adding to the route
             apiRoute.setFilters(List.of(jwtFilter));
 
             routes.add(apiRoute);
-
+            //System.out.println("FILTERS: " + apiRoute.getFilters());
             // Management route
-            if (config.getManagement() != null
-                    && config.getManagement().isEnabled()) {
+            if (config.getManagement() != null && config.getManagement().isEnabled()) {
 
                 List<String> endpoints =
                         resolveManagementEndpoints(config, service);

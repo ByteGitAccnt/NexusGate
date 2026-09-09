@@ -2,14 +2,16 @@ services:
   auth:
     url: http://localhost:8081
     path: /api/v1/auth/**
-
+    publicEndpoints:
+      - /login
+      - /register
+      - /refresh
   product:
     url: http://localhost:8083
     path: /api/v1/product/**
     management:
       endpoints:
         - health
-
   order:
     url: http://localhost:8082
     path: /api/v1/order/**
@@ -29,6 +31,7 @@ security:
   jwt:
     enabled: true
     algorithm: HS256
+    identityClaim: userid
 
     verification:
       type: shared-secret
