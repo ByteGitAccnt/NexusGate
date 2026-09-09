@@ -35,7 +35,7 @@ public class NexusRouteBuilder implements RouteDefinitionLocator {
             ServiceConfig service = entry.getValue();
             // JWT authentication filter
             FilterDefinition jwtFilter = new FilterDefinition();
-            jwtFilter.setName("JwtAuthentication");
+            jwtFilter.setName("JwtAuthentication");// part of naming convention
 
             // convert the public endpoints to list and feed to the filter args
             Map<String, String> args = new HashMap<>();
@@ -48,6 +48,14 @@ public class NexusRouteBuilder implements RouteDefinitionLocator {
 
             jwtFilter.setArgs(args);
             args.put("servicePath", String.join(",", service.getPath().replace("/**", "")));
+            // feeding the identity claim to the jwt filter
+            String identityClaim = config.getSecurity()
+                    .getJwt()
+                    .getIdentityClaim();
+            if (identityClaim == null || identityClaim.isBlank()) {
+                identityClaim = "sub";
+            }
+            args.put("identityClaim", identityClaim);
             // Business API route
             RouteDefinition apiRoute = new RouteDefinition();
 

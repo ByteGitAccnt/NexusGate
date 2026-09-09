@@ -31,6 +31,7 @@ security:
   jwt:
     enabled: true
     algorithm: HS256
+    identityClaim: userid
 
     verification:
       type: shared-secret
