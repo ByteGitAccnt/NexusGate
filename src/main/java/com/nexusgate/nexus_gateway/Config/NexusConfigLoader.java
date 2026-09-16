@@ -23,6 +23,8 @@ public class NexusConfigLoader {
             String resolvedYaml = environmentResolver.resolve(yamlContent);
             Yaml yaml = new Yaml();
             NexusConfig config = yaml.loadAs(resolvedYaml, NexusConfig.class);
+           /* System.out.println("Redis host: " + config.getRedis().getHost());
+            System.out.println("Redis port: " + config.getRedis().getPort());*/
           /*  System.out.println(
                     "JWT secret resolved: " +
                             !config.getSecurity()

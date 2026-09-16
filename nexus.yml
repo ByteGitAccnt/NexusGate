@@ -39,3 +39,7 @@ security:
 
     issuer: http://localhost:8081
     audience: nexusgate
+
+redis:
+  host: ${REDIS_HOST}
+  port: ${REDIS_PORT}
