@@ -43,3 +43,19 @@ security:
 redis:
   host: ${REDIS_HOST}
   port: ${REDIS_PORT}
+
+rateLimit:
+
+  outer:
+    enabled: true
+    algorithm: token-bucket
+    capacity: 5
+    refillRate: 5
+    refillPeriodSeconds: 60
+
+  inner:
+    enabled: false
+    algorithm: token-bucket
+    capacity: 100
+    refillRate: 60
+    refillPeriodSeconds: 60

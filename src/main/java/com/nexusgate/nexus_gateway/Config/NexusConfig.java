@@ -1,5 +1,6 @@
 package com.nexusgate.nexus_gateway.Config;
 
+import com.nexusgate.nexus_gateway.Config.RateLimit.RateLimitConfig;
 import com.nexusgate.nexus_gateway.Config.Security.SecurityConfig;
 import com.nexusgate.nexus_gateway.Config.management.ManagementConfig;
 import com.nexusgate.nexus_gateway.Redis.RedisConfig;
@@ -14,4 +15,5 @@ public class NexusConfig {
     private Map<String, ServiceConfig> services;
     private SecurityConfig security;
     private RedisConfig redis;
+    private RateLimitConfig rateLimit;
 }
