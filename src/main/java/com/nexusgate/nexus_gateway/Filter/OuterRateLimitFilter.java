@@ -2,6 +2,7 @@ package com.nexusgate.nexus_gateway.Filter;
 
 import com.nexusgate.nexus_gateway.Config.NexusConfig;
 import com.nexusgate.nexus_gateway.Config.RateLimit.*;
+
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
 import org.springframework.core.Ordered;
@@ -28,19 +29,28 @@ public class OuterRateLimitFilter implements GlobalFilter , Ordered {
     }
 
     @Override
-    public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
+    public Mono<Void> filter( ServerWebExchange exchange,GatewayFilterChain chain) {
         RateLimitPolicy policy = nexusConfig.getRateLimit().getOuter();
         if(!policy.isEnabled()){
             return chain.filter(exchange);
         }
         String ip = clientIpResolver.resolve(exchange);
         String bucketKey = KeyGenerator.forIp(ip);
-        return tokenBucket.consume(bucketKey , policy).flatMap(result -> handleResult(exchange, chain, result));
+        return tokenBucket.consume(bucketKey , policy).flatMap(result -> handleResult(exchange, chain, result, policy));
     }
 
-    private Mono<Void> handleResult(ServerWebExchange exchange, GatewayFilterChain chain , RateLimitResult result) {
+    private Mono<Void> handleResult(ServerWebExchange exchange, GatewayFilterChain chain , RateLimitResult result , RateLimitPolicy policy) {
+        exchange.getResponse()
+                .getHeaders()
+                .add("X-RateLimit-Limit", String.valueOf(policy.getCapacity()));
+        exchange.getResponse()
+                .getHeaders()
+                .add("X-RateLimit-Remaining", String.valueOf(result.remaining()));
         if(!result.allowed()){
             exchange.getResponse().setStatusCode(HttpStatus.TOO_MANY_REQUESTS);
+            exchange.getResponse()
+                    .getHeaders()
+                    .add("Retry-After", String.valueOf(result.retryAfter()));
             return exchange.getResponse().setComplete();
         }
         return chain.filter(exchange);

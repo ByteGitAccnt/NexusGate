@@ -35,7 +35,7 @@ public class RedisTokenBucket {
                                 String.valueOf(policy.getCapacity()),
                                 String.valueOf(policy.getRefillRate()),
                                 String.valueOf(policy.getRefillPeriodSeconds()),
-                                "120"
+                                String.valueOf(calculateTtl(policy))
                         )
                 )
                 .single()
@@ -52,6 +52,14 @@ public class RedisTokenBucket {
                 allowed == 1,// if allowed is 1, then the request is allowed, otherwise it is not
                 remaining,
                 retryAfter
+        );
+    }
+    private long calculateTtl(RateLimitPolicy policy) {
+
+        return (long) Math.ceil(
+                (double) policy.getCapacity()
+                        * policy.getRefillPeriodSeconds()
+                        / policy.getRefillRate()
         );
     }
 }
