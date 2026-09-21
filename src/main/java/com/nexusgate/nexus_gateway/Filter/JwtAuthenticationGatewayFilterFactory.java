@@ -6,6 +6,7 @@ import io.jsonwebtoken.JwtException;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.cloud.gateway.filter.GatewayFilter;
+import org.springframework.cloud.gateway.filter.OrderedGatewayFilter;
 import org.springframework.cloud.gateway.filter.factory.AbstractGatewayFilterFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.server.reactive.ServerHttpRequest;
@@ -28,7 +29,7 @@ public class JwtAuthenticationGatewayFilterFactory extends AbstractGatewayFilter
 
     @Override
     public GatewayFilter apply(Config config) {
-        return (exchange, chain) -> {
+        GatewayFilter filter =  (exchange, chain) -> {
 
             String requestPath = exchange.getRequest().getPath().value();
             List<String> publicEndpoints =
@@ -97,6 +98,8 @@ public class JwtAuthenticationGatewayFilterFactory extends AbstractGatewayFilter
                 return exchange.getResponse().setComplete();
             }
         };
+        //default order is -100, so we set it to -90 to ensure it runs after the default filters
+        return new OrderedGatewayFilter(filter, -90);
     }
 
     @Getter
