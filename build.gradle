@@ -34,6 +34,8 @@ dependencies {
 	runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.12.6'
 	// actuators health , info etc
 	testImplementation 'org.springframework.boot:spring-boot-starter-actuator-test'
+	//redis reactive template
+	implementation 'org.springframework.boot:spring-boot-starter-data-redis-reactive'
 	compileOnly 'org.projectlombok:lombok'
 	annotationProcessor 'org.projectlombok:lombok'
 
