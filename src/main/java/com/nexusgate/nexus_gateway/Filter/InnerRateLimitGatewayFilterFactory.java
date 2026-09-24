@@ -5,6 +5,7 @@ import com.nexusgate.nexus_gateway.Config.RateLimit.RateLimitKeyGenerator;
 import com.nexusgate.nexus_gateway.Config.RateLimit.RateLimitPolicy;
 import com.nexusgate.nexus_gateway.Config.RateLimit.RateLimitResult;
 import com.nexusgate.nexus_gateway.Config.RateLimit.RedisTokenBucket;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.cloud.gateway.filter.GatewayFilter;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.OrderedGatewayFilter;
@@ -16,7 +17,13 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
+import java.util.Random;
+
 @Component
+@ConditionalOnProperty(
+        name = "rateLimit.enabled",
+        havingValue = "true"
+)
 public class InnerRateLimitGatewayFilterFactory  extends AbstractGatewayFilterFactory<Object> {
 
     private final RateLimitKeyGenerator keyGenerator;
@@ -35,6 +42,10 @@ public class InnerRateLimitGatewayFilterFactory  extends AbstractGatewayFilterFa
     public GatewayFilter apply(Object config){
         GatewayFilter filter =  (exchange , chain) -> {
 
+            if(!nexusConfig.getRateLimit().isEnabled()){
+                System.out.println("RATE LIMIT MASTER DISABLED ,Inner limiter opted");
+                return chain.filter(exchange);
+            }
             RateLimitPolicy policy = nexusConfig.getRateLimit().getInner();
 
             if (!policy.isEnabled()) {

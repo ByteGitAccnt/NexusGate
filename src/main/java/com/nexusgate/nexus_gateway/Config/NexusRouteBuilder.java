@@ -38,7 +38,9 @@ public class NexusRouteBuilder implements RouteDefinitionLocator {
             jwtFilter.setName("JwtAuthentication");// part of naming convention
             //inner rate limiter filter
             FilterDefinition innerLimiter = new FilterDefinition();
-            innerLimiter.setName("InnerRateLimit");
+            if(config.getRateLimit().isEnabled()){
+                innerLimiter.setName("InnerRateLimit");
+            }
 
             // convert the public endpoints to list and feed to the filter args
             Map<String, String> args = new HashMap<>();
@@ -71,10 +73,17 @@ public class NexusRouteBuilder implements RouteDefinitionLocator {
 
             apiRoute.setPredicates(List.of(apiPredicate));
             //JWT authentication and inner rate limiter filter adding to the route
-            apiRoute.setFilters(List.of(
-                    jwtFilter ,
-                    innerLimiter
-            ));
+            if(config.getRateLimit().isEnabled()){
+                apiRoute.setFilters(List.of(
+                        jwtFilter ,
+                        innerLimiter
+                ));
+            }else{
+                apiRoute.setFilters(List.of(
+                        jwtFilter
+                ));
+            }
+
 
             routes.add(apiRoute);
             //System.out.println("FILTERS: " + apiRoute.getFilters());

@@ -1,5 +1,6 @@
 package com.nexusgate.nexus_gateway.Config.RateLimit;
 
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.data.redis.core.ReactiveRedisTemplate;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
@@ -9,6 +10,10 @@ import reactor.core.publisher.Mono;
 import java.util.List;
 
 @Service
+@ConditionalOnProperty(
+        name = "rateLimit.enabled",
+        havingValue = "true"
+)
 public class RedisTokenBucket {
     // a reactive template for interacting with Redis
     //we have normal redis template and reactive redis template, we are using reactive redis template
