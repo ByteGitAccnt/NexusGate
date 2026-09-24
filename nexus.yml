@@ -40,22 +40,23 @@ security:
     issuer: http://localhost:8081
     audience: nexusgate
 
-redis:
-  host: ${REDIS_HOST}
-  port: ${REDIS_PORT}
-
 rateLimit:
+  enabled: false
 
   outer:
     enabled: true
     algorithm: token-bucket
-    capacity: 5
-    refillRate: 5
+    capacity: 6
+    refillRate: 1
     refillPeriodSeconds: 60
 
   inner:
-    enabled: false
+    enabled: true
     algorithm: token-bucket
-    capacity: 100
-    refillRate: 60
+    capacity: 1
+    refillRate: 1
     refillPeriodSeconds: 60
+
+redis:
+  host: ${REDIS_HOST}
+  port: ${REDIS_PORT}

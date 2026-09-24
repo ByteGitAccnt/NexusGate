@@ -4,7 +4,7 @@ import lombok.Data;
 
 @Data
 public class RateLimitConfig {
-
+    private boolean enabled;
     private RateLimitPolicy outer;
     private RateLimitPolicy inner;
 }

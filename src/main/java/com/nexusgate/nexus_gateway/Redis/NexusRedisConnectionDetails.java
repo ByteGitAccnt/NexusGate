@@ -2,10 +2,15 @@ package com.nexusgate.nexus_gateway.Redis;
 
 
 import com.nexusgate.nexus_gateway.Config.NexusConfig;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.data.redis.autoconfigure.DataRedisConnectionDetails;
 import org.springframework.stereotype.Component;
 
 @Component
+@ConditionalOnProperty(
+        name = "rateLimit.enabled",
+        havingValue = "true"
+)
 public class NexusRedisConnectionDetails implements DataRedisConnectionDetails.Standalone {
 // we are overriding the redis's data connection details to push our host and other port details
     // we don't need an explicit bean for ReactiveRedisTemplate as spring will automatically create it for us and consume the custom details we are providing.
