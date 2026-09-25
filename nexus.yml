@@ -46,7 +46,7 @@ rateLimit:
   redisTimeoutMs: 1000
 
   outer:
-    enabled: true
+    enabled: false
     algorithm: token-bucket
     capacity: 6
     refillRate: 1
@@ -55,7 +55,7 @@ rateLimit:
   inner:
     enabled: true
     algorithm: token-bucket
-    capacity: 3
+    capacity: 1
     refillRate: 1
     refillPeriodSeconds: 60
 
