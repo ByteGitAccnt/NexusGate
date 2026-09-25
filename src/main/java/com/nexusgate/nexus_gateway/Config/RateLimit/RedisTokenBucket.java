@@ -1,5 +1,6 @@
 package com.nexusgate.nexus_gateway.Config.RateLimit;
 
+import com.nexusgate.nexus_gateway.Config.NexusConfig;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.data.redis.core.ReactiveRedisTemplate;
@@ -7,6 +8,7 @@ import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 
+import java.time.Duration;
 import java.util.List;
 
 @Service
@@ -21,17 +23,20 @@ public class RedisTokenBucket {
     private final ReactiveRedisTemplate<String, String> redisTemplate;
     // a script that will be executed in Redis to implement the token bucket algorithm
     private final DefaultRedisScript<List> script;
+    private final NexusConfig nexusConfig;
 
-    public RedisTokenBucket(ReactiveRedisTemplate<String, String> redisTemplate) {
+    public RedisTokenBucket(ReactiveRedisTemplate<String, String> redisTemplate , NexusConfig nexusConfig) {
         this.redisTemplate = redisTemplate;
 
         this.script = new DefaultRedisScript<>();
         this.script.setLocation(new ClassPathResource("redis/token_bucket.lua"));
         // we set the result type of the script to be a list, because the script will return a list of values
         this.script.setResultType(List.class);
+        this.nexusConfig = nexusConfig;
     }
     // the consume method takes a bucket key and a rate limit policy, and returns a Mono of RateLimitResult
     public Mono<RateLimitResult> consume(String bucketKey, RateLimitPolicy policy) {
+        Duration timeout = Duration.ofMillis(nexusConfig.getRateLimit().getRedisTimeoutMs());
         //the excute method of the redis template takes the script, the keys, and the arguments, and returns a Mono of the result
         return redisTemplate.execute(
                         script,
@@ -44,6 +49,7 @@ public class RedisTokenBucket {
                         )
                 )
                 .single()
+                .timeout(timeout)
                 .map(this::toResult);// convert the result to a RateLimitResult object
     }
 

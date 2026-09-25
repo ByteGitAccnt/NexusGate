@@ -41,7 +41,9 @@ security:
     audience: nexusgate
 
 rateLimit:
-  enabled: false
+  enabled: true
+  redisFailureStrategy: fail-closed
+  redisTimeoutMs: 1000
 
   outer:
     enabled: true
@@ -53,7 +55,7 @@ rateLimit:
   inner:
     enabled: true
     algorithm: token-bucket
-    capacity: 1
+    capacity: 3
     refillRate: 1
     refillPeriodSeconds: 60
 

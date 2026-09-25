@@ -4,7 +4,7 @@ import com.nexusgate.nexus_gateway.Config.RateLimit.RateLimitPolicy;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 
-/*
+
 @Component
 public class NexusConfigTestRunner implements CommandLineRunner {
 
@@ -22,23 +22,8 @@ public class NexusConfigTestRunner implements CommandLineRunner {
        System.out.println("Global management endpoints: " + config.getManagement().getEndpoints());
 
        config.getServices().forEach((name, service) -> {
-
-            /*System.out.println(
-                    name + " -> " +
-                            service.getUrl() + " -> " +
-                            service.getPath()
-            );
-            System.out.println(
-                    "  Public endpoints: " +
-                            service.getPublicEndpoints()
-            );*/
-
-            /*if (service.getManagement() != null) {
-                System.out.println(
-                        "  Override: " +
-                                service.getManagement().getEndpoints()
-                );
-            }*/
+           System.out.println("Rate limit strategy ; " + config.getRateLimit().getRedisFailureStrategy());
+           System.out.println("Rate limit strategy time out; " + config.getRateLimit().getRedisTimeoutMs());
           /* RateLimitPolicy inner = config.getRateLimit().getInner();
            RateLimitPolicy outer = config.getRateLimit().getOuter();
            System.out.println(
@@ -64,9 +49,7 @@ public class NexusConfigTestRunner implements CommandLineRunner {
                            outer.getCapacity() +
                            "\nrefile rate per second :" +
                            outer.getRefillPeriodSeconds()
-           );
+           );*/
        });
     }
 }
-
-*/
