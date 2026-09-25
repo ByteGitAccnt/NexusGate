@@ -43,7 +43,6 @@ public class InnerRateLimitGatewayFilterFactory  extends AbstractGatewayFilterFa
         GatewayFilter filter =  (exchange , chain) -> {
 
             if(!nexusConfig.getRateLimit().isEnabled()){
-                System.out.println("RATE LIMIT MASTER DISABLED ,Inner limiter opted");
                 return chain.filter(exchange);
             }
             RateLimitPolicy policy = nexusConfig.getRateLimit().getInner();
@@ -71,7 +70,7 @@ public class InnerRateLimitGatewayFilterFactory  extends AbstractGatewayFilterFa
                                                 chain,
                                                 policy
                                         )
-                                );
+                                ) ;
                     });
         };
         // determine the order of the filter, -80 is chosen to ensure it runs before most other filters
@@ -82,7 +81,14 @@ public class InnerRateLimitGatewayFilterFactory  extends AbstractGatewayFilterFa
         String userId = authentication.getName();
         String bucketKey = keyGenerator.forUser(userId);
         return tokenBucket.consume(bucketKey , policy)
-                .flatMap(result -> handleResult(exchange , chain , policy, result));
+                .flatMap(result -> handleResult(exchange , chain , policy, result))
+                .onErrorResume(error ->
+                    handleRedisFailure(
+                        exchange,
+                        chain,
+                        error
+                    )
+        );
 
     }
     private Mono<Void> handleResult(ServerWebExchange exchange , GatewayFilterChain chain, RateLimitPolicy policy, RateLimitResult result) {
@@ -102,5 +108,16 @@ public class InnerRateLimitGatewayFilterFactory  extends AbstractGatewayFilterFa
             return exchange.getResponse().setComplete();
         }
         return chain.filter(exchange);
+    }
+    private Mono<Void> handleRedisFailure(ServerWebExchange exchange, GatewayFilterChain chain , Throwable error) {
+        String strategy = nexusConfig.getRateLimit().getRedisFailureStrategy();
+        //if strategy is fail open , then we allow request to pass without causing an error! we chose availability over security
+        //if fail-closed then we chose security over availability and the request will be rejected
+        if("fail-open".equalsIgnoreCase(strategy)){
+            return chain.filter(exchange);
+        }
+        exchange.getResponse()
+                .setStatusCode(HttpStatus.SERVICE_UNAVAILABLE);
+        return exchange.getResponse().setComplete();
     }
 }

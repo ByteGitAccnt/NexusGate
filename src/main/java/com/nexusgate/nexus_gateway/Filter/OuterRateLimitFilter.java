@@ -4,6 +4,7 @@ import com.nexusgate.nexus_gateway.Config.NexusConfig;
 import com.nexusgate.nexus_gateway.Config.RateLimit.*;
 
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.boot.micrometer.metrics.autoconfigure.MetricsProperties;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
 import org.springframework.core.Ordered;
@@ -11,6 +12,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
+
+import java.time.Duration;
 
 @Component
 @ConditionalOnProperty(
@@ -36,13 +39,7 @@ public class OuterRateLimitFilter implements GlobalFilter , Ordered {
     @Override
     public Mono<Void> filter( ServerWebExchange exchange,GatewayFilterChain chain) {
 
-        System.out.println(
-                "RATE LIMIT MASTER ENABLED: "
-                        + nexusConfig.getRateLimit().isEnabled()
-        );
-
         if(!nexusConfig.getRateLimit().isEnabled()){
-            System.out.println("RATE LIMIT MASTER DISABLED, outer was opted out");
             return chain.filter(exchange);
         }
 
@@ -53,7 +50,11 @@ public class OuterRateLimitFilter implements GlobalFilter , Ordered {
         }
         String ip = clientIpResolver.resolve(exchange);
         String bucketKey = KeyGenerator.forIp(ip);
-        return tokenBucket.consume(bucketKey , policy).flatMap(result -> handleResult(exchange, chain, result, policy));
+        return tokenBucket.consume(bucketKey , policy)
+                .flatMap(result ->
+                        handleResult(exchange, chain, result, policy))
+                .onErrorResume(error ->
+                        handleRedisFailure(exchange , chain , error));
     }
 
     private Mono<Void> handleResult(ServerWebExchange exchange, GatewayFilterChain chain , RateLimitResult result , RateLimitPolicy policy) {
@@ -71,6 +72,17 @@ public class OuterRateLimitFilter implements GlobalFilter , Ordered {
             return exchange.getResponse().setComplete();
         }
         return chain.filter(exchange);
+    }
+    private Mono<Void> handleRedisFailure(ServerWebExchange exchange, GatewayFilterChain chain , Throwable error) {
+        String strategy = nexusConfig.getRateLimit().getRedisFailureStrategy();
+        //if strategy is fail open , then we allow request to pass without causing an error! we chose availability over security
+        //if fail-closed then we chose security over availability and the request will be rejected
+        if("fail-open".equalsIgnoreCase(strategy)){
+            return chain.filter(exchange);
+        }
+        exchange.getResponse()
+                .setStatusCode(HttpStatus.SERVICE_UNAVAILABLE);
+        return exchange.getResponse().setComplete();
     }
     @Override
     public int getOrder() {
