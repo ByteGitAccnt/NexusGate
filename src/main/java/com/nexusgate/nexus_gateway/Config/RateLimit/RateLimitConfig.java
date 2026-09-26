@@ -4,7 +4,7 @@ import lombok.Data;
 
 @Data
 public class RateLimitConfig {
-    private boolean enabled;
+    private boolean enabled = false;
     private String redisFailureStrategy;
     private long redisTimeoutMs;
     private RateLimitPolicy outer;

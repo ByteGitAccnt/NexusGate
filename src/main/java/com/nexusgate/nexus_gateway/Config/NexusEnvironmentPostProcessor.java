@@ -37,9 +37,6 @@ public class NexusEnvironmentPostProcessor implements EnvironmentPostProcessor, 
             }
 
             Object enabled = rateLimit.get("enabled");
-            //System.out.println(
-             //       "NEXUS SPRING PROPERTY rateLimit.enabled = " + enabled
-           //);
             if (enabled == null) {
                 return;
             }

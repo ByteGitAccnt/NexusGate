@@ -7,7 +7,7 @@ import java.util.List;
 @Data
 public class ManagementConfig {
 
-    private boolean enabled;
+    private boolean enabled = false;
     private String basePath;
     private String targetPath;
     private List<String> endpoints;

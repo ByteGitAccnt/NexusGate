@@ -90,8 +90,7 @@ public class NexusRouteBuilder implements RouteDefinitionLocator {
             // Management route
             if (config.getManagement() != null && config.getManagement().isEnabled()) {
 
-                List<String> endpoints =
-                        resolveManagementEndpoints(config, service);
+                List<String> endpoints = resolveManagementEndpoints(config, service);
 
                 if (!endpoints.isEmpty()) {
 
