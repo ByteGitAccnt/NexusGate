@@ -10,6 +10,7 @@ import org.yaml.snakeyaml.Yaml;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.HashMap;
 import java.util.Map;
 
 /*
@@ -30,29 +31,46 @@ public class NexusEnvironmentPostProcessor implements EnvironmentPostProcessor, 
             Yaml yaml = new Yaml();
             Map<String, Object> yamlData = yaml.load(yamlContent);
 
+            Map<String, Object> properties = new HashMap<>();
+
             Object rateLimitObject = yamlData.get("rateLimit");
 
-            if (!(rateLimitObject instanceof Map<?, ?> rateLimit)) {
-                return;
-            }
-
-            Object enabled = rateLimit.get("enabled");
-            if (enabled == null) {
-                return;
-            }
-
-            Map<String, Object> properties =
-                    Map.of(
+            if (rateLimitObject instanceof Map<?, ?> rateLimit) {
+                Object enabled = rateLimit.get("enabled");
+                if (enabled != null) {
+                    properties.put(
                             "rateLimit.enabled",
                             String.valueOf(enabled)
                     );
+                }
+            }
+            Object securityObject = yamlData.get("security");
 
-            environment.getPropertySources().addFirst(
-                    new MapPropertySource(
-                            "nexusRateLimit",
-                            properties
-                    )
-            );
+            if (securityObject instanceof Map<?, ?> security) {
+
+                Object enabled = security.get("enabled");
+                if (enabled != null) {
+                    properties.put(
+                            "security.enabled",
+                            String.valueOf(enabled)
+                    );
+                }
+            }
+
+//            environment.getPropertySources().addFirst(
+//                    new MapPropertySource(
+//                            "nexusRateLimit",
+//                            properties
+//                    )
+//            );
+            if (!properties.isEmpty()) {
+                environment.getPropertySources().addFirst(
+                        new MapPropertySource(
+                                "nexusConfig",
+                                properties
+                        )
+                );
+            }
 
         }catch (IOException e){
             throw new IllegalStateException(

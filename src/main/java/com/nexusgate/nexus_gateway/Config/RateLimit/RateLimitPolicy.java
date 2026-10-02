@@ -5,7 +5,7 @@ import lombok.Data;
 @Data
 public class RateLimitPolicy {
 
-    private boolean enabled;
+    private boolean enabled = false;
     private String algorithm;
     private long capacity;
     private long refillRate;

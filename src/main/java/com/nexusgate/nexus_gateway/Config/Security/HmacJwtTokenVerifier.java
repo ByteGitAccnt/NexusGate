@@ -3,13 +3,17 @@ package com.nexusgate.nexus_gateway.Config.Security;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
 
-
 @Component
+@ConditionalOnProperty(
+        name = "security.enabled",
+        havingValue = "true"
+)
 public class HmacJwtTokenVerifier implements JwtTokenVerifier {
 
     private final JwtConfig jwtConfig;

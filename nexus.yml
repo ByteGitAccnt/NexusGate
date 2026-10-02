@@ -19,15 +19,17 @@ services:
       endpoints:
         - metrics
 
+
 management:
   enabled: true
   basePath: /management
   targetPath: /actuator
   endpoints:
     - health
-    - info
+
 
 security:
+  enabled: true
   jwt:
     enabled: true
     algorithm: HS256
@@ -59,11 +61,12 @@ rateLimit:
     refillRate: 1
     refillPeriodSeconds: 60
 
+
+logging:
+  enabled: true
+  fields:
+    duration: false
+
 redis:
   host: ${REDIS_HOST}
   port: ${REDIS_PORT}
-
-logging:
-  enabled: false
-  fields:
-    duration: false
