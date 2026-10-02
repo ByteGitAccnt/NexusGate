@@ -16,7 +16,8 @@ A reactive Spring Cloud Gateway server providing API gateway and reverse proxy c
   - [Example configuration](#example-configuration)
   - [Gateway service configuration](#gateway-service-configuration)
   - [Management endpoint configuration](#management-endpoint-configuration)
-  - [JWT verification configuration](#jwt-verification-configuration)
+  - [Security toggle and JWT verification configuration](#security-toggle-and-jwt-verification-configuration)
+  - [Logging configuration](#logging-configuration)
 - [Rate limiting](#rate-limiting)
   - [Master switch](#master-switch)
   - [Redis failure strategy](#redis-failure-strategy)
@@ -38,10 +39,12 @@ A reactive Spring Cloud Gateway server providing API gateway and reverse proxy c
 
 - **Reverse proxy and request routing** to downstream microservices
 - **YAML-based service configuration** for flexible deployment
-- **JWT authentication** with configurable identity claims
+- **Security master switch** to enable or disable all gateway security checks
+- **JWT authentication** with configurable identity claims and optional per-service public endpoints
 - **rate limiting** Redis-backed token-bucket rate limiting
 - **Service-specific public endpoints** with optional JWT verification
 - **Centralized management endpoint routing** with per-service overrides
+- **Request logging** with configurable fields and request IDs
 - **Principal propagation** via `X-Principal` headers with spoofing protection
 
 The gateway is built using **Spring Cloud Gateway** with reactive (WebFlux) programming model for handling high-throughput asynchronous requests efficiently.
@@ -63,12 +66,14 @@ The gateway is built using **Spring Cloud Gateway** with reactive (WebFlux) prog
 - API gateway and reverse proxy for downstream services
 - YAML-based service configuration via `nexus.yml`
 - per-service public endpoint configuration
+- global `security.enabled` master switch and nested `security.jwt.enabled` verification toggle
 - JWT validation with configurable `identityClaim`
 - management endpoint routing through `/management` to each service's actuator endpoint
 - Redis-backed token-bucket rate limiting with a master enable/disable switch
 - separate outer IP-based and inner user-based limiters
 - fail-open / fail-closed Redis behavior with configurable timeout
 - HTTP 429 responses, `Retry-After`, and `X-RateLimit-*` headers
+- request logging with selectable fields and request ID propagation
 - reactive Spring Cloud Gateway implementation
 
 ## Architecture
@@ -177,6 +182,7 @@ management:
     - info
 
 security:
+  enabled: true
   jwt:
     enabled: true
     algorithm: HS256
@@ -205,6 +211,18 @@ rateLimit:
     capacity: 1
     refillRate: 1
     refillPeriodSeconds: 60
+
+logging:
+  enabled: true
+  fields:
+    timestamp: true
+    method: true
+    path: true
+    service: true
+    status: true
+    duration: true
+    requestId: true
+    clientIp: true
 
 redis:
   host: ${REDIS_HOST}
@@ -246,10 +264,11 @@ and rewrite the request to the downstream actuator path:
 /actuator/health
 ```
 
-### JWT verification configuration
+### Security toggle and JWT verification configuration
 
 ```yaml
 security:
+  enabled: true
   jwt:
     enabled: true
     algorithm: HS256
@@ -261,9 +280,31 @@ security:
     audience: nexusgate
 ```
 
+`security.enabled` is the master switch for gateway authentication. When it is `false`, the JWT gateway filter is not active and the gateway effectively skips JWT enforcement for protected routes. `security.jwt.enabled` allows the JWT verification layer itself to be disabled while leaving the broader security configuration visible in the YAML.
+
 NexusGate validates the token signature and the expected issuer and audience values. It then extracts the configured identity claim and uses it as the authenticated principal for downstream propagation.
 
 NexusGate does not issue or manage access tokens. The Auth Service handles token issuance, refresh flows, expiration, and refresh-token rotation.
+
+### Logging configuration
+
+```yaml
+logging:
+  enabled: true
+  fields:
+    timestamp: true
+    method: true
+    path: true
+    service: true
+    status: true
+    duration: true
+    requestId: true
+    clientIp: true
+```
+
+The logging block turns gateway request logging on or off. When `logging.enabled` is `false`, the gateway skips the global logging filter entirely. Each field under `logging.fields` is independently configurable, allowing you to emit only the request metadata you need while keeping log output concise.
+
+The gateway also assigns and propagates an `X-Request-ID` header for request correlation, and logs the downstream route/service name when available.
 
 ## Rate limiting
 
@@ -399,32 +440,50 @@ Public endpoints can be accessed without a token. If a client provides a Bearer 
 ```text
 nexus-gateway/
 ├── src/
-│   └── main/
-│       └── java/com/nexusgate/nexus_gateway/
-│           ├── Config/
-│           │   ├── RateLimit/
-│           │   │   ├── RateLimitConfig.java
-│           │   │   ├── RateLimitPolicy.java
-│           │   │   └── RedisTokenBucket.java
-│           │   ├── Security/
-│           │   ├── management/
-│           │   ├── NexusConfig.java
-│           │   ├── NexusConfigLoader.java
-│           │   ├── NexusEnvironmentPostProcessor.java
-│           │   ├── NexusRouteBuilder.java
-│           │   └── NexusSpringConfig.java
-│           ├── Filter/
-│           │   ├── InnerRateLimitGatewayFilterFactory.java
-│           │   ├── JwtAuthenticationGatewayFilterFactory.java
-│           │   ├── ManagementEndpointGatewayFilterFactory.java
-│           │   └── OuterRateLimitFilter.java
-│           ├── Redis/
-│           │   ├── NexusRedisAutoConfigurationFilter.java
-│           │   ├── NexusRedisConnectionDetails.java
-│           │   └── RedisConfig.java
-│           ├── docs/
-│           │   └── configuration.md
-│           └── NexusGatewayApplication.java
+│   ├── main/
+│   │   ├── java/com/nexusgate/nexus_gateway/
+│   │   │   ├── Config/
+│   │   │   │   ├── Logging/
+│   │   │   │   │   ├── LoggingConfig.java
+│   │   │   │   │   └── LoggingFields.java
+│   │   │   │   ├── RateLimit/
+│   │   │   │   │   ├── RateLimitConfig.java
+│   │   │   │   │   ├── RateLimitPolicy.java
+│   │   │   │   │   └── RedisTokenBucket.java
+│   │   │   │   ├── Security/
+│   │   │   │   │   ├── HmacJwtTokenVerifier.java
+│   │   │   │   │   ├── JwtConfig.java
+│   │   │   │   │   ├── JwtTokenVerifier.java
+│   │   │   │   │   ├── JwtVerificationConfig.java
+│   │   │   │   │   └── SecurityConfig.java
+│   │   │   │   ├── management/
+│   │   │   │   │   ├── ManagementConfig.java
+│   │   │   │   │   └── ManagementServiceConfig.java
+│   │   │   │   ├── EnvironmentVariableResolver.java
+│   │   │   │   ├── NexusConfig.java
+│   │   │   │   ├── NexusConfigLoader.java
+│   │   │   │   ├── NexusConfigTestRunner.java
+│   │   │   │   ├── NexusEnvironmentPostProcessor.java
+│   │   │   │   ├── NexusRouteBuilder.java
+│   │   │   │   ├── NexusSpringConfig.java
+│   │   │   │   ├── SecurityConfig.java
+│   │   │   │   ├── ServiceConfig.java
+│   │   │   ├── Filter/
+│   │   │   │   ├── InnerRateLimitGatewayFilterFactory.java
+│   │   │   │   ├── JwtAuthenticationGatewayFilterFactory.java
+│   │   │   │   ├── LoggingGatewayFilter.java
+│   │   │   │   ├── ManagementEndpointGatewayFilterFactory.java
+│   │   │   │   └── OuterRateLimitFilter.java
+│   │   │   ├── Redis/
+│   │   │   │   ├── NexusRedisAutoConfigurationFilter.java
+│   │   │   │   ├── NexusRedisConnectionDetails.java
+│   │   │   │   └── RedisConfig.java
+│   │   │   ├── docs/
+│   │   │   │   └── configuration.md
+│   │   │   └── NexusGatewayApplication.java
+│   │   └── resources/
+│   │       └── META-INF/
+│   └── test/java/com/nexusgate/nexus_gateway/
 ├── build.gradle
 ├── gradlew
 ├── gradlew.bat

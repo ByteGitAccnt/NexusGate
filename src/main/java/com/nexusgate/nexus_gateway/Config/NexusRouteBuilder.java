@@ -17,50 +17,53 @@ import java.util.Map;
 @Component
 public class NexusRouteBuilder implements RouteDefinitionLocator {
 
-    private final NexusConfigLoader configLoader;
+    private final NexusConfig config;
 
-    public NexusRouteBuilder(NexusConfigLoader configLoader) {
-        this.configLoader = configLoader;
+    public NexusRouteBuilder(NexusConfig config) {
+        this.config = config;
     }
 
     @Override
     public Flux<RouteDefinition> getRouteDefinitions() {
 
-        NexusConfig config = configLoader.load();
         List<RouteDefinition> routes = new ArrayList<>();
-        for (Map.Entry<String, ServiceConfig> entry :
-                config.getServices().entrySet()) {
+        for (Map.Entry<String, ServiceConfig> entry : config.getServices().entrySet()) {
 
             String serviceName = entry.getKey();
             ServiceConfig service = entry.getValue();
             // JWT authentication filter
-            FilterDefinition jwtFilter = new FilterDefinition();
-            jwtFilter.setName("JwtAuthentication");// part of naming convention
+            FilterDefinition jwtFilter = null;
+            if(config.getSecurity().isEnabled()){
+                jwtFilter = new FilterDefinition();
+                jwtFilter.setName("JwtAuthentication");// part of naming convention
+
+                // convert the public endpoints to list and feed to the filter args
+                Map<String, String> args = new HashMap<>();
+
+                List<String> publicEndpoints = service.getPublicEndpoints();
+
+                if (publicEndpoints != null && !publicEndpoints.isEmpty()) {
+                    args.put("publicEndpoints", String.join(",", publicEndpoints));
+                }
+                args.put("servicePath", String.join(",", service.getPath().replace("/**", "")));
+                // feeding the identity claim to the jwt filter
+                String identityClaim = config.getSecurity()
+                        .getJwt()
+                        .getIdentityClaim();
+                if (identityClaim == null || identityClaim.isBlank()) {
+                    identityClaim = "sub";
+                }
+                args.put("identityClaim", identityClaim);
+
+                jwtFilter.setArgs(args);
+            }
             //inner rate limiter filter
-            FilterDefinition innerLimiter = new FilterDefinition();
+            FilterDefinition innerLimiter = null;
             if(config.getRateLimit().isEnabled()){
+                innerLimiter = new FilterDefinition();
                 innerLimiter.setName("InnerRateLimit");
             }
 
-            // convert the public endpoints to list and feed to the filter args
-            Map<String, String> args = new HashMap<>();
-
-            List<String> publicEndpoints = service.getPublicEndpoints();
-
-            if (publicEndpoints != null && !publicEndpoints.isEmpty()) {
-                args.put("publicEndpoints", String.join(",", publicEndpoints));
-            }
-
-            jwtFilter.setArgs(args);
-            args.put("servicePath", String.join(",", service.getPath().replace("/**", "")));
-            // feeding the identity claim to the jwt filter
-            String identityClaim = config.getSecurity()
-                    .getJwt()
-                    .getIdentityClaim();
-            if (identityClaim == null || identityClaim.isBlank()) {
-                identityClaim = "sub";
-            }
-            args.put("identityClaim", identityClaim);
             // Business API route
             RouteDefinition apiRoute = new RouteDefinition();
 
@@ -73,16 +76,26 @@ public class NexusRouteBuilder implements RouteDefinitionLocator {
 
             apiRoute.setPredicates(List.of(apiPredicate));
             //JWT authentication and inner rate limiter filter adding to the route
-            if(config.getRateLimit().isEnabled()){
-                apiRoute.setFilters(List.of(
-                        jwtFilter ,
-                        innerLimiter
-                ));
-            }else{
-                apiRoute.setFilters(List.of(
-                        jwtFilter
-                ));
+            List<FilterDefinition> filters = new ArrayList<>();
+
+            if (jwtFilter != null) {
+                filters.add(jwtFilter);
             }
+
+            if (innerLimiter != null) {
+                filters.add(innerLimiter);
+            }
+            apiRoute.setFilters(filters);
+//            if(config.getRateLimit().isEnabled()){
+//                apiRoute.setFilters(List.of(
+//                        jwtFilter ,
+//                        innerLimiter
+//                ));
+//            }else{
+//                apiRoute.setFilters(List.of(
+//                        jwtFilter
+//                ));
+//            }
 
 
             routes.add(apiRoute);

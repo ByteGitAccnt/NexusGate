@@ -4,5 +4,6 @@ import lombok.Data;
 
 @Data
 public class SecurityConfig {
+    private boolean enabled = false;
     private JwtConfig jwt;
 }

@@ -151,6 +151,7 @@ This allows gateway management access to be controlled per service instead of ex
 
 ```yaml
 security:
+  enabled: true
   jwt:
     enabled: true
     algorithm: HS256
@@ -165,6 +166,25 @@ security:
 ```
 
 This section controls JWT verification performed by NexusGate.
+
+### Global security switch
+
+```yaml
+security:
+  enabled: true
+```
+
+`security.enabled` acts as the master toggle for gateway authentication. When it is `false`, the JWT gateway filter is disabled and NexusGate does not enforce token checks for protected routes. This is the top-level control for turning the security layer on or off.
+
+### JWT verification toggle
+
+```yaml
+security:
+  jwt:
+    enabled: true
+```
+
+`security.jwt.enabled` is a narrower toggle for the JWT validation layer itself. It can be used to keep the configuration visible while temporarily disabling the actual verification behavior.
 
 ### Responsibility boundary
 
@@ -222,7 +242,46 @@ secret: ${JWT_SECRET}
 
 NexusGate validates both values to ensure the token was issued by the expected auth system and intended for NexusGate.
 
-## 4. Rate limiting configuration
+## 4. Request logging configuration
+
+```yaml
+logging:
+  enabled: true
+  fields:
+    timestamp: true
+    method: true
+    path: true
+    service: true
+    status: true
+    duration: true
+    requestId: true
+    clientIp: true
+```
+
+This section controls the gateway's global request logging.
+
+### `logging.enabled`
+
+The master switch for request logging. When `false`, NexusGate skips the `LoggingGatewayFilter` altogether and performs no request instrumentation.
+
+### `logging.fields`
+
+Every field is independently configurable. This allows you to keep logs concise while still capturing only the information relevant to a deployment.
+
+Available flags:
+
+- `timestamp`
+- `method`
+- `path`
+- `service`
+- `status`
+- `duration`
+- `requestId`
+- `clientIp`
+
+The filter also emits and propagates the `X-Request-ID` header for request correlation across the gateway and downstream services.
+
+## 5. Rate limiting configuration
 
 ```yaml
 rateLimit:
@@ -275,7 +334,7 @@ rateLimit:
 
 Redis is required because the rate-limit state is stored in Redis.
 
-## 5. Redis failure strategy
+## 6. Redis failure strategy
 
 ```yaml
 redisFailureStrategy: fail-closed
@@ -311,7 +370,7 @@ This allows downstream traffic to continue when Redis is unavailable.
 
 This setting affects runtime Redis failures. It does not mean Redis is optional when `rateLimit.enabled=true`.
 
-## 6. Redis command timeout
+## 7. Redis command timeout
 
 ```yaml
 redisTimeoutMs: 1000
@@ -331,7 +390,7 @@ The timeout allows NexusGate to quickly apply the configured `fail-open` or `fai
 
 Lettuce may continue its background Redis reconnection process independently.
 
-## 7. Outer rate limiter
+## 8. Outer rate limiter
 
 ```yaml
 outer:
@@ -366,7 +425,7 @@ enabled: false
 
 The setting remains available so it can be enabled independently later.
 
-## 8. Inner rate limiter
+## 9. Inner rate limiter
 
 ```yaml
 inner:
@@ -398,7 +457,7 @@ User B → nexusgate:ratelimit:user:73
 
 A request from User A consuming all of User A's tokens does not consume User B's tokens.
 
-## 9. Token bucket parameters
+## 10. Token bucket parameters
 
 Both outer and inner limiters use the token-bucket algorithm.
 
@@ -437,7 +496,7 @@ NexusGate does not run a background job to continuously refill every bucket.
 
 Instead, tokens are calculated when a request arrives. This keeps the implementation lightweight and avoids unnecessary background processing.
 
-## 10. Redis configuration
+## 11. Redis configuration
 
 ```yaml
 redis:
@@ -482,7 +541,7 @@ Redis infrastructure required
 
 This makes Redis an optional dependency for users who choose not to use NexusGate's rate limiting.
 
-## 11. Rate limit response headers
+## 12. Rate limit response headers
 
 When rate limiting is active, NexusGate provides:
 
@@ -506,7 +565,7 @@ X-RateLimit-Remaining: 0
 Retry-After: 54
 ```
 
-## 12. Current configuration summary
+## 13. Current configuration summary
 
 The current example configuration means:
 
