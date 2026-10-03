@@ -43,7 +43,7 @@ security:
     audience: nexusgate
 
 rateLimit:
-  enabled: true
+  enabled: false
   redisFailureStrategy: fail-closed
   redisTimeoutMs: 1000
 
