@@ -5,6 +5,7 @@ import com.nexusgate.nexus_gateway.Config.RateLimit.RateLimitKeyGenerator;
 import com.nexusgate.nexus_gateway.Config.RateLimit.RateLimitPolicy;
 import com.nexusgate.nexus_gateway.Config.RateLimit.RateLimitResult;
 import com.nexusgate.nexus_gateway.Config.RateLimit.RedisTokenBucket;
+import io.micrometer.core.instrument.MeterRegistry;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.cloud.gateway.filter.GatewayFilter;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
@@ -17,8 +18,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
-import java.util.Random;
-
 @Component
 @ConditionalOnProperty(
         name = "rateLimit.enabled",
@@ -29,13 +28,15 @@ public class InnerRateLimitGatewayFilterFactory  extends AbstractGatewayFilterFa
     private final RateLimitKeyGenerator keyGenerator;
     private final RedisTokenBucket tokenBucket;
     private final NexusConfig nexusConfig;
+    private final MeterRegistry meterRegistry;
 
     public InnerRateLimitGatewayFilterFactory(RateLimitKeyGenerator keyGenerator, RedisTokenBucket tokenBucket,
-                                              NexusConfig nexusConfig) {
+                                              NexusConfig nexusConfig, MeterRegistry meterRegistry) {
         super(Object.class);
         this.keyGenerator = keyGenerator;
         this.tokenBucket = tokenBucket;
         this.nexusConfig = nexusConfig;
+        this.meterRegistry = meterRegistry;
     }
 
     @Override
@@ -85,8 +86,7 @@ public class InnerRateLimitGatewayFilterFactory  extends AbstractGatewayFilterFa
                 .onErrorResume(error ->
                     handleRedisFailure(
                         exchange,
-                        chain,
-                        error
+                        chain
                     )
         );
 
@@ -100,6 +100,11 @@ public class InnerRateLimitGatewayFilterFactory  extends AbstractGatewayFilterFa
                 .set("X-RateLimit-Remaining", String.valueOf(result.remaining()));
 
         if(!result.allowed()){
+            meterRegistry.counter(
+                    "nexusgate.rate_limit.rejections",
+                    "limiter" , "inner",
+                    "reason", "limit_exceeded"
+            ).increment();
             exchange.getResponse()
                     .getHeaders()
                     .set("Retry-After", String.valueOf(result.retryAfter()));
@@ -109,13 +114,18 @@ public class InnerRateLimitGatewayFilterFactory  extends AbstractGatewayFilterFa
         }
         return chain.filter(exchange);
     }
-    private Mono<Void> handleRedisFailure(ServerWebExchange exchange, GatewayFilterChain chain , Throwable error) {
+    private Mono<Void> handleRedisFailure(ServerWebExchange exchange, GatewayFilterChain chain) {
         String strategy = nexusConfig.getRateLimit().getRedisFailureStrategy();
         //if strategy is fail open , then we allow request to pass without causing an error! we chose availability over security
         //if fail-closed then we chose security over availability and the request will be rejected
         if("fail-open".equalsIgnoreCase(strategy)){
             return chain.filter(exchange);
         }
+        meterRegistry.counter(
+                "nexusgate.rate_limit.rejections",
+                "limiter" , "inner",
+                "reason", "redis_failure"
+        ).increment();
         exchange.getResponse()
                 .setStatusCode(HttpStatus.SERVICE_UNAVAILABLE);
         return exchange.getResponse().setComplete();
