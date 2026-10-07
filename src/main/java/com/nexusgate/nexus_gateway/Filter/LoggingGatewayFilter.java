@@ -2,12 +2,14 @@ package com.nexusgate.nexus_gateway.Filter;
 
 import com.nexusgate.nexus_gateway.Config.Logging.LoggingFields;
 import com.nexusgate.nexus_gateway.Config.NexusConfig;
+import io.micrometer.core.instrument.MeterRegistry;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
 import org.springframework.cloud.gateway.route.Route;
 import org.springframework.cloud.gateway.support.ServerWebExchangeUtils;
 import org.springframework.core.Ordered;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
@@ -22,8 +24,10 @@ import java.util.UUID;
 @Component
 public class LoggingGatewayFilter implements GlobalFilter, Ordered {
     private final NexusConfig nexusConfig;
-    public LoggingGatewayFilter(NexusConfig nexusConfig) {
+    private final MeterRegistry metricRegistry;
+    public LoggingGatewayFilter(NexusConfig nexusConfig, MeterRegistry metricRegistry) {
         this.nexusConfig = nexusConfig;
+        this.metricRegistry = metricRegistry;
     }
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
@@ -120,11 +124,40 @@ public class LoggingGatewayFilter implements GlobalFilter, Ordered {
                                 .append(clientIp);
                     }
                     log.info(logMessage.toString());
+                    String outcome = getOutcome(exchange.getResponse().getStatusCode());
+                    metricRegistry.counter(
+                            "nexusgate.requests.routed",
+                            "service", serviceName,
+                            "outcome", outcome
+                    ).increment();
                 });
     }
 
     @Override
     public int getOrder() {
         return -200;
+    }
+
+    private String getOutcome(HttpStatusCode status) {
+        if (status == null) {
+            return "UNKNOWN";
+        }
+
+        int value = status.value();
+
+        if (value >= 200 && value < 300) {
+            return "SUCCESS";
+        }
+        if (value >= 300 && value < 400) {
+            return "REDIRECTION";
+        }
+        if (value >= 400 && value < 500) {
+            return "CLIENT_ERROR";
+        }
+        if (value >= 500 && value < 600) {
+            return "SERVER_ERROR";
+        }
+
+        return "UNKNOWN";
     }
 }
