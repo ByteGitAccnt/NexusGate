@@ -86,18 +86,6 @@ public class NexusRouteBuilder implements RouteDefinitionLocator {
                 filters.add(innerLimiter);
             }
             apiRoute.setFilters(filters);
-//            if(config.getRateLimit().isEnabled()){
-//                apiRoute.setFilters(List.of(
-//                        jwtFilter ,
-//                        innerLimiter
-//                ));
-//            }else{
-//                apiRoute.setFilters(List.of(
-//                        jwtFilter
-//                ));
-//            }
-
-
             routes.add(apiRoute);
             //System.out.println("FILTERS: " + apiRoute.getFilters());
             // Management route
