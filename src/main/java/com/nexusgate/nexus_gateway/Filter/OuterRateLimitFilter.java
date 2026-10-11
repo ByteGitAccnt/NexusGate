@@ -66,11 +66,13 @@ public class OuterRateLimitFilter implements GlobalFilter , Ordered {
                 .getHeaders()
                 .add("X-RateLimit-Remaining", String.valueOf(result.remaining()));
         if(!result.allowed()){
-            meterRegistry.counter(
-                    "nexusgate.rate_limit.rejections",
-                    "limiter" , "outer",
-                    "reason", "limit_exceeded"
-            ).increment();
+            if(nexusConfig.getMonitoring().isEnabled()) {
+                meterRegistry.counter(
+                        "nexusgate.rate_limit.rejections",
+                        "limiter" , "outer",
+                        "reason", "limit_exceeded"
+                ).increment();
+            }
             exchange.getResponse().setStatusCode(HttpStatus.TOO_MANY_REQUESTS);
             exchange.getResponse()
                     .getHeaders()
@@ -86,11 +88,13 @@ public class OuterRateLimitFilter implements GlobalFilter , Ordered {
         if("fail-open".equalsIgnoreCase(strategy)){
             return chain.filter(exchange);
         }
-        meterRegistry.counter(
-                "nexusgate.rate_limit.rejections",
-                "limiter" , "outer",
-                "reason", "redis_failure"
-        ).increment();
+        if (nexusConfig.getMonitoring().isEnabled()) {
+            meterRegistry.counter(
+                    "nexusgate.rate_limit.rejections",
+                    "limiter", "outer",
+                    "reason", "redis_failure"
+            ).increment();
+        }
         exchange.getResponse()
                 .setStatusCode(HttpStatus.SERVICE_UNAVAILABLE);
         return exchange.getResponse().setComplete();

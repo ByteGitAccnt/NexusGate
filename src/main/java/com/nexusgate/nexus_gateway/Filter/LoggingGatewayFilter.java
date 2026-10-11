@@ -124,12 +124,15 @@ public class LoggingGatewayFilter implements GlobalFilter, Ordered {
                                 .append(clientIp);
                     }
                     log.info(logMessage.toString());
-                    String outcome = getOutcome(exchange.getResponse().getStatusCode());
-                    metricRegistry.counter(
-                            "nexusgate.requests.routed",
-                            "service", serviceName,
-                            "outcome", outcome
-                    ).increment();
+                    if(nexusConfig.getMonitoring().isEnabled()){
+                        String outcome = getOutcome(exchange.getResponse().getStatusCode());
+                        metricRegistry.counter(
+                                "nexusgate.requests.routed",
+                                "service", serviceName,
+                                "outcome", outcome
+                        ).increment();
+                    }
+
                 });
     }
 

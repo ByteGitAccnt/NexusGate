@@ -12,7 +12,7 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,gateway,metrics
+        include: health,gateway,metrics,prometheus
 
 server:
   port: 8080

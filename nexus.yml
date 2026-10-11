@@ -51,13 +51,13 @@ rateLimit:
     enabled: true
     algorithm: token-bucket
     capacity: 7
-    refillRate: 1
+    refillRate: 3
     refillPeriodSeconds: 60
 
   inner:
     enabled: true
     algorithm: token-bucket
-    capacity: 6
+    capacity: 3
     refillRate: 1
     refillPeriodSeconds: 60
 
@@ -70,3 +70,7 @@ logging:
 redis:
   host: ${REDIS_HOST}
   port: ${REDIS_PORT}
+
+monitoring:
+  enabled: false
+

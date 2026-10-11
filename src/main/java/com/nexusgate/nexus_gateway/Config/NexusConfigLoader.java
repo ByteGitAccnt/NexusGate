@@ -1,6 +1,7 @@
 package com.nexusgate.nexus_gateway.Config;
 
 import com.nexusgate.nexus_gateway.Config.Logging.LoggingConfig;
+import com.nexusgate.nexus_gateway.Config.Monitoring.MonitoringConfig;
 import com.nexusgate.nexus_gateway.Config.RateLimit.RateLimitConfig;
 import com.nexusgate.nexus_gateway.Config.Security.JwtConfig;
 import com.nexusgate.nexus_gateway.Config.management.ManagementConfig;
@@ -48,6 +49,9 @@ public class NexusConfigLoader {
 
             if (config.getSecurity().getJwt() == null) {
                 config.getSecurity().setJwt(new JwtConfig());
+            }
+            if(config.getMonitoring() == null){
+                config.setMonitoring(new MonitoringConfig());
             }
             return config;
 
