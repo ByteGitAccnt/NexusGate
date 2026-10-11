@@ -1,5 +1,6 @@
 package com.nexusgate.nexus_gateway.Filter;
 
+import com.nexusgate.nexus_gateway.Config.NexusConfig;
 import com.nexusgate.nexus_gateway.Config.Security.JwtTokenVerifier;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
@@ -26,11 +27,14 @@ import java.util.List;
 )
 public class JwtAuthenticationGatewayFilterFactory extends AbstractGatewayFilterFactory<JwtAuthenticationGatewayFilterFactory.Config> {
 
+    private NexusConfig nexusConfig;
     private final JwtTokenVerifier tokenVerifier;
     private final MeterRegistry meterRegistry;
 
-    public JwtAuthenticationGatewayFilterFactory(JwtTokenVerifier tokenVerifier, MeterRegistry meterRegistry) {
+
+    public JwtAuthenticationGatewayFilterFactory(NexusConfig nexusConfig, JwtTokenVerifier tokenVerifier, MeterRegistry meterRegistry) {
         super(Config.class);
+        this.nexusConfig = nexusConfig;
         this.tokenVerifier = tokenVerifier;
         this.meterRegistry = meterRegistry;
     }
@@ -61,10 +65,12 @@ public class JwtAuthenticationGatewayFilterFactory extends AbstractGatewayFilter
             }
 
             if ( authHeader == null || !authHeader.startsWith("Bearer ")) {
-                meterRegistry.counter(
-                        "nexusgate.auth.failures" ,
-                        "reason" ,"missing_or_invalid_header"
-                        ).increment();
+                if(nexusConfig.getMonitoring().isEnabled()) {
+                    meterRegistry.counter(
+                            "nexusgate.auth.failures" ,
+                            "reason" ,"missing_or_invalid_header"
+                            ).increment();
+                }
                 exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
                 return exchange.getResponse().setComplete();
             }
@@ -79,10 +85,12 @@ public class JwtAuthenticationGatewayFilterFactory extends AbstractGatewayFilter
 
                 Object identity = claims.get(identityClaim);
                 if (identity == null) {
-                    meterRegistry.counter(
-                            "nexusgate.auth.failures",
-                            "reason" , "identity_missing"
-                    ).increment();
+                    if (nexusConfig.getMonitoring().isEnabled()) {
+                        meterRegistry.counter(
+                                "nexusgate.auth.failures",
+                                "reason" , "identity_missing"
+                        ).increment();
+                    }
                     exchange.getResponse()
                             .setStatusCode(HttpStatus.UNAUTHORIZED);
                     return exchange.getResponse().setComplete();
@@ -108,10 +116,12 @@ public class JwtAuthenticationGatewayFilterFactory extends AbstractGatewayFilter
                                 )
                         );
             } catch (JwtException | IllegalArgumentException e) {
-                meterRegistry.counter(
-                        "nexusgate.auth.failures",
-                        "reason" , "invalid_token"
-                ).increment();
+                if (nexusConfig.getMonitoring().isEnabled()) {
+                    meterRegistry.counter(
+                            "nexusgate.auth.failures",
+                            "reason" , "invalid_token"
+                    ).increment();
+                }
                 exchange.getResponse()
                         .setStatusCode(HttpStatus.UNAUTHORIZED);
                 return exchange.getResponse().setComplete();

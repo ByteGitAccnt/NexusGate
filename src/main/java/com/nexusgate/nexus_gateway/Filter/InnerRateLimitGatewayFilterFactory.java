@@ -100,11 +100,13 @@ public class InnerRateLimitGatewayFilterFactory  extends AbstractGatewayFilterFa
                 .set("X-RateLimit-Remaining", String.valueOf(result.remaining()));
 
         if(!result.allowed()){
-            meterRegistry.counter(
-                    "nexusgate.rate_limit.rejections",
-                    "limiter" , "inner",
-                    "reason", "limit_exceeded"
-            ).increment();
+            if(nexusConfig.getMonitoring().isEnabled()) {
+                meterRegistry.counter(
+                        "nexusgate.rate_limit.rejections",
+                        "limiter", "inner",
+                        "reason", "limit_exceeded"
+                ).increment();
+            }
             exchange.getResponse()
                     .getHeaders()
                     .set("Retry-After", String.valueOf(result.retryAfter()));
@@ -121,11 +123,13 @@ public class InnerRateLimitGatewayFilterFactory  extends AbstractGatewayFilterFa
         if("fail-open".equalsIgnoreCase(strategy)){
             return chain.filter(exchange);
         }
-        meterRegistry.counter(
-                "nexusgate.rate_limit.rejections",
-                "limiter" , "inner",
-                "reason", "redis_failure"
-        ).increment();
+        if(nexusConfig.getMonitoring().isEnabled()) {
+            meterRegistry.counter(
+                    "nexusgate.rate_limit.rejections",
+                    "limiter", "inner",
+                    "reason", "redis_failure"
+            ).increment();
+        }
         exchange.getResponse()
                 .setStatusCode(HttpStatus.SERVICE_UNAVAILABLE);
         return exchange.getResponse().setComplete();

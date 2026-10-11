@@ -1,6 +1,7 @@
 package com.nexusgate.nexus_gateway.Config;
 
 import com.nexusgate.nexus_gateway.Config.Logging.LoggingConfig;
+import com.nexusgate.nexus_gateway.Config.Monitoring.MonitoringConfig;
 import com.nexusgate.nexus_gateway.Config.RateLimit.RateLimitConfig;
 import com.nexusgate.nexus_gateway.Config.Security.SecurityConfig;
 import com.nexusgate.nexus_gateway.Config.management.ManagementConfig;
@@ -18,4 +19,5 @@ public class NexusConfig {
     private RedisConfig redis;
     private RateLimitConfig rateLimit;
     private LoggingConfig logging;
+    private MonitoringConfig monitoring;
 }
