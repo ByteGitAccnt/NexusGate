@@ -394,10 +394,10 @@ Lettuce may continue its background Redis reconnection process independently.
 
 ```yaml
 outer:
-  enabled: false
+  enabled: true
   algorithm: token-bucket
-  capacity: 6
-  refillRate: 1
+  capacity: 100
+  refillRate: 100
   refillPeriodSeconds: 60
 ```
 
@@ -417,13 +417,13 @@ Example:
 nexusgate:ratelimit:ip:192.168.1.10
 ```
 
-In the current configuration the outer limiter is disabled:
+In the current configuration the outer limiter is enabled:
 
 ```yaml
-enabled: false
+enabled: true
 ```
 
-The setting remains available so it can be enabled independently later.
+The setting remains available so it can be disabled or tuned independently later.
 
 ## 9. Inner rate limiter
 
@@ -431,8 +431,8 @@ The setting remains available so it can be enabled independently later.
 inner:
   enabled: true
   algorithm: token-bucket
-  capacity: 1
-  refillRate: 1
+  capacity: 60
+  refillRate: 60
   refillPeriodSeconds: 60
 ```
 
@@ -574,7 +574,7 @@ JWT verification       → ENABLED
 Redis infrastructure   → ENABLED
 Rate limiting          → ENABLED
 
-Outer IP limiter       → DISABLED
+Outer IP limiter       → ENABLED
 Inner user limiter     → ENABLED
 
 Inner capacity         → 60 requests
