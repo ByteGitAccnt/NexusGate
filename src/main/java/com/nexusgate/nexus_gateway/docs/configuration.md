@@ -586,6 +586,17 @@ Redis timeout          → 1 second
 
 The configuration is intentionally flexible: individual rate-limit layers can be enabled or disabled while the master `rateLimit.enabled` switch controls whether the rate-limiting subsystem itself is active.
 
+## 14. Monitoring configuration
+
+```yaml
+monitoring:
+  enabled: true
+```
+
+- `monitoring.enabled` is the single master switch in nexus.yml. When `true` the gateway initializes metrics collection and exposes a Prometheus scrape endpoint at the default path `/management/prometheus`.
+- A sample Prometheus configuration for local testing is included at `src/main/resources/prometheus.yml`.
+- The gateway contains a custom metric registry and Prometheus exporter wiring in the codebase (see the Metrics package), but advanced exporter options are managed in code and are not exposed as nested YAML keys in `nexus.yml`.
+
 ## Summary
 
 This configuration is designed to support a clean separation of responsibilities:
