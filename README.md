@@ -18,6 +18,7 @@ A reactive Spring Cloud Gateway server providing API gateway and reverse proxy c
   - [Management endpoint configuration](#management-endpoint-configuration)
   - [Security toggle and JWT verification configuration](#security-toggle-and-jwt-verification-configuration)
   - [Logging configuration](#logging-configuration)
+  - [Monitoring configuration](#monitoring)
 - [Rate limiting](#rate-limiting)
   - [Master switch](#master-switch)
   - [Redis failure strategy](#redis-failure-strategy)
@@ -46,6 +47,7 @@ A reactive Spring Cloud Gateway server providing API gateway and reverse proxy c
 - **Centralized management endpoint routing** with per-service overrides
 - **Request logging** with configurable fields and request IDs
 - **Principal propagation** via `X-Principal` headers with spoofing protection
+- **Monitoring**: basic metrics collection using a custom metric registry and a Prometheus scrape endpoint (configurable via `nexus.yml`)
 
 The gateway is built using **Spring Cloud Gateway** with reactive (WebFlux) programming model for handling high-throughput asynchronous requests efficiently.
 
@@ -74,6 +76,9 @@ The gateway is built using **Spring Cloud Gateway** with reactive (WebFlux) prog
 - fail-open / fail-closed Redis behavior with configurable timeout
 - HTTP 429 responses, `Retry-After`, and `X-RateLimit-*` headers
 - request logging with selectable fields and request ID propagation
+- monitoring with a custom metric registry and Prometheus scrape endpoint
+  - `monitoring.enabled` master switch to enable/disable all gateway metrics
+  - Prometheus exporter exposure via configurable scrape path and config file
 - reactive Spring Cloud Gateway implementation
 
 ## Architecture
@@ -224,6 +229,9 @@ logging:
     requestId: true
     clientIp: true
 
+monitoring:
+  enabled: true
+
 redis:
   host: ${REDIS_HOST}
   port: ${REDIS_PORT}
@@ -305,6 +313,17 @@ logging:
 The logging block turns gateway request logging on or off. When `logging.enabled` is `false`, the gateway skips the global logging filter entirely. Each field under `logging.fields` is independently configurable, allowing you to emit only the request metadata you need while keeping log output concise.
 
 The gateway also assigns and propagates an `X-Request-ID` header for request correlation, and logs the downstream route/service name when available.
+
+### Monitoring
+
+NexusGate supports basic metrics collection controlled by a single master switch in nexus.yml:
+
+```yaml
+monitoring:
+  enabled: true
+```
+
+When `monitoring.enabled` is `true`, the gateway initializes its metric collection and exposes a Prometheus scrape endpoint at /management/prometheus (default). A sample Prometheus configuration for local testing is included at src/main/resources/prometheus.yml. Advanced metric registry wiring (custom metric registry and exporter behavior) is implemented in code and not currently exposed as nested keys in nexus.yml.
 
 ## Rate limiting
 
@@ -459,6 +478,9 @@ nexus-gateway/
 │   │   │   │   ├── management/
 │   │   │   │   │   ├── ManagementConfig.java
 │   │   │   │   │   └── ManagementServiceConfig.java
+│   │   │   │   ├── Metrics/
+│   │   │   │   │   ├── MonitoringConfig.java
+│   │   │   │   │   └── CustomMetricRegistry.java
 │   │   │   │   ├── EnvironmentVariableResolver.java
 │   │   │   │   ├── NexusConfig.java
 │   │   │   │   ├── NexusConfigLoader.java
@@ -482,13 +504,15 @@ nexus-gateway/
 │   │   │   │   └── configuration.md
 │   │   │   └── NexusGatewayApplication.java
 │   │   └── resources/
-│   │       └── META-INF/
+│   │       ├── META-INF/
+│   │       └── prometheus.yml
 │   └── test/java/com/nexusgate/nexus_gateway/
 ├── build.gradle
 ├── gradlew
 ├── gradlew.bat
 ├── HELP.md
 ├── nexus.yml
+├── prometheus.yml
 ├── README.md
 ├── settings.gradle
 └── src/test/
