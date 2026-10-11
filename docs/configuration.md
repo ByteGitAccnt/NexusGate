@@ -292,15 +292,15 @@ rateLimit:
   outer:
     enabled: false
     algorithm: token-bucket
-    capacity: 6
-    refillRate: 1
+    capacity: 100
+    refillRate: 100
     refillPeriodSeconds: 60
 
   inner:
     enabled: true
     algorithm: token-bucket
-    capacity: 1
-    refillRate: 1
+    capacity: 60
+    refillRate: 60
     refillPeriodSeconds: 60
 ```
 
@@ -577,8 +577,8 @@ Rate limiting          → ENABLED
 Outer IP limiter       → DISABLED
 Inner user limiter     → ENABLED
 
-Inner capacity         → 1 request
-Inner refill           → 1 token / 60 seconds
+Inner capacity         → 60 requests
+Inner refill           → 60 tokens / 60 seconds
 
 Redis failure strategy → fail-closed
 Redis timeout          → 1 second

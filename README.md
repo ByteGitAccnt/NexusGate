@@ -57,7 +57,7 @@ The gateway is built using **Spring Cloud Gateway** with reactive (WebFlux) prog
 
 **Critical Responsibilities:**
 
-- **NexusGate handles**: NexusGate handles: Request routing, reverse proxying, JWT verification, issuer/audience validation, identity extraction, principal propagation, and centralized gateway-level policies
+- **NexusGate handles**:  Request routing, reverse proxying, JWT verification, issuer/audience validation, identity extraction, principal propagation, and centralized gateway-level policies
 - **Auth Service handles**: Access token generation, refresh token validation, token expiration management, and new token issuance
 - **Your responsibility**: Implement, maintain, and configure the Auth Service according to your security requirements
 
@@ -116,8 +116,8 @@ The service ports used in examples such as `http://localhost:8081`, `http://loca
 ### Clone the repository
 
 ```bash
-git clone https://github.com/ByteGitAccnt/nexus-gateway.git
-cd nexus-gateway
+git clone https://github.com/ByteGitAccnt/NexusGate.git
+cd NexusGate
 ```
 
 ### Verify Java
@@ -204,17 +204,17 @@ rateLimit:
   redisTimeoutMs: 1000
 
   outer:
-    enabled: false
+    enabled: true
     algorithm: token-bucket
-    capacity: 6
-    refillRate: 1
+    capacity: 100
+    refillRate: 100
     refillPeriodSeconds: 60
 
   inner:
     enabled: true
     algorithm: token-bucket
-    capacity: 1
-    refillRate: 1
+    capacity: 100
+    refillRate: 100
     refillPeriodSeconds: 60
 
 logging:
@@ -338,17 +338,19 @@ rateLimit:
   outer:
     enabled: false
     algorithm: token-bucket
-    capacity: 6
-    refillRate: 1
+    capacity: 100
+    refillRate: 100
     refillPeriodSeconds: 60
 
   inner:
     enabled: true
     algorithm: token-bucket
-    capacity: 1
-    refillRate: 1
+    capacity: 60
+    refillRate: 60
     refillPeriodSeconds: 60
 ```
+
+Note: The numeric and timing values shown above (capacity, refillRate, refillPeriodSeconds, redisTimeoutMs, etc.) are development/debug defaults for local testing only. Tune these values according to production traffic patterns and infrastructure before deployment.
 
 ### Master switch
 
