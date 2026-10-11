@@ -336,7 +336,7 @@ rateLimit:
   redisTimeoutMs: 1000
 
   outer:
-    enabled: false
+    enabled: true
     algorithm: token-bucket
     capacity: 100
     refillRate: 100
@@ -387,7 +387,7 @@ NexusGate supports two independent token bucket stages:
 - outer limiter: IP-based, keyed by client IP
 - inner limiter: user-based, keyed by authenticated identity
 
-The current configuration disables the outer limiter and enables the inner limiter.
+The current configuration enables both the outer limiter and the inner limiter.
 
 The outer limiter is useful as a gateway-level protection layer before user identity is known. The inner limiter uses the JWT identity claim and keeps separate buckets per authenticated user.
 
