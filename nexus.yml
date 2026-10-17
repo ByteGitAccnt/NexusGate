@@ -72,5 +72,5 @@ redis:
   port: ${REDIS_PORT}
 
 monitoring:
-  enabled: false
+  enabled: true
 
