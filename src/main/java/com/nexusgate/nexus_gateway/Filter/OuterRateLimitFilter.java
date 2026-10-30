@@ -4,6 +4,7 @@ import com.nexusgate.nexus_gateway.Config.NexusConfig;
 import com.nexusgate.nexus_gateway.Config.RateLimit.*;
 
 import io.micrometer.core.instrument.MeterRegistry;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.micrometer.metrics.autoconfigure.MetricsProperties;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
@@ -16,6 +17,7 @@ import reactor.core.publisher.Mono;
 
 import java.time.Duration;
 
+@Slf4j
 @Component
 @ConditionalOnProperty(
         name = "rateLimit.enabled",
@@ -82,6 +84,13 @@ public class OuterRateLimitFilter implements GlobalFilter , Ordered {
         return chain.filter(exchange);
     }
     private Mono<Void> handleRedisFailure(ServerWebExchange exchange, GatewayFilterChain chain , Throwable error) {
+        log.error(
+                "Redis rate limiter failed. requestId={}, path={}, strategy={}",
+                exchange.getRequest().getId(),
+                exchange.getRequest().getURI().getPath(),
+                nexusConfig.getRateLimit().getRedisFailureStrategy(),
+                error
+        );
         String strategy = nexusConfig.getRateLimit().getRedisFailureStrategy();
         //if strategy is fail open , then we allow request to pass without causing an error! we chose availability over security
         //if fail-closed then we chose security over availability and the request will be rejected

@@ -3,6 +3,7 @@ package com.nexusgate.nexus_gateway.Filter;
 import com.nexusgate.nexus_gateway.Config.Logging.LoggingFields;
 import com.nexusgate.nexus_gateway.Config.NexusConfig;
 import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Timer;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
@@ -19,6 +20,7 @@ import java.net.InetSocketAddress;
 import java.time.Instant;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 @Slf4j
 @Component
@@ -31,7 +33,7 @@ public class LoggingGatewayFilter implements GlobalFilter, Ordered {
     }
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
-        if (!nexusConfig.getLogging().isEnabled()) {
+        if (!nexusConfig.getLogging().isEnabled() && !nexusConfig.getMonitoring().isEnabled()) {
             return chain.filter(exchange);
         }
         LoggingFields fields = nexusConfig.getLogging().getFields();
@@ -41,6 +43,7 @@ public class LoggingGatewayFilter implements GlobalFilter, Ordered {
         String serviceName = route != null ? route.getId() : "unknown";
         // for duration calculation
         long startTime = fields.isDuration() ? System.currentTimeMillis() : 0;
+        long metricStartTime = System.nanoTime();
         //setting request id if not present , accept if present
         String incomingRequestId = exchange.getRequest()
                 .getHeaders()
@@ -123,7 +126,9 @@ public class LoggingGatewayFilter implements GlobalFilter, Ordered {
                         logMessage.append(" clientIp:")
                                 .append(clientIp);
                     }
-                    log.info(logMessage.toString());
+                    if(nexusConfig.getLogging().isEnabled()){
+                        log.info(logMessage.toString());
+                    }
                     if(nexusConfig.getMonitoring().isEnabled()){
                         String outcome = getOutcome(exchange.getResponse().getStatusCode());
                         metricRegistry.counter(
@@ -131,6 +136,15 @@ public class LoggingGatewayFilter implements GlobalFilter, Ordered {
                                 "service", serviceName,
                                 "outcome", outcome
                         ).increment();
+                        if (nexusConfig.getMonitoring().isEnabled()) {
+                            Timer.builder("nexusgate.response.time")
+                                    .tag("service", serviceName)
+                                    .register(metricRegistry)
+                                    .record(
+                                            System.nanoTime() - metricStartTime,
+                                            TimeUnit.NANOSECONDS
+                                    );
+                        }
                     }
 
                 });

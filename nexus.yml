@@ -1,19 +1,19 @@
 services:
   auth:
-    url: http://localhost:8081
+    url: http://host.docker.internal:8081
     path: /api/v1/auth/**
     publicEndpoints:
       - /login
       - /register
       - /refresh
   product:
-    url: http://localhost:8083
+    url: http://host.docker.internal:8083
     path: /api/v1/product/**
     management:
       endpoints:
         - health
   order:
-    url: http://localhost:8082
+    url: http://host.docker.internal:8082
     path: /api/v1/order/**
     management:
       endpoints:
@@ -39,7 +39,7 @@ security:
       type: shared-secret
       secret: ${JWT_SECRET}
 
-    issuer: http://localhost:8081
+    issuer: http://host.docker.internal:8081
     audience: nexusgate
 
 rateLimit:
@@ -50,15 +50,15 @@ rateLimit:
   outer:
     enabled: true
     algorithm: token-bucket
-    capacity: 100
-    refillRate: 100
+    capacity: 500
+    refillRate: 200
     refillPeriodSeconds: 60
 
   inner:
     enabled: true
     algorithm: token-bucket
-    capacity: 60
-    refillRate: 60
+    capacity: 100
+    refillRate: 100
     refillPeriodSeconds: 60
 
 
@@ -72,5 +72,5 @@ redis:
   port: ${REDIS_PORT}
 
 monitoring:
-  enabled: false
+  enabled: true
 

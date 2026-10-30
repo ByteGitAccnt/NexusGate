@@ -1,0 +1,38 @@
+
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Gradle cache and generated build output
+.gradle
+build/
+
+# IDE files
+.idea/
+.vscode/
+*.iml
+*.ipr
+*.iws
+
+# Operating system files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs
+*.log
+logs/
+
+# Local environment files and secrets
+.env
+.env.*
+!.env.example
+
+# Temporary files
+*.tmp
+*.swp
+*.bak
+
+# Docker
+compose.override.yml

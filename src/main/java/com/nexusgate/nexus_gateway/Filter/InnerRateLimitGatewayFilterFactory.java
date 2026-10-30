@@ -6,6 +6,7 @@ import com.nexusgate.nexus_gateway.Config.RateLimit.RateLimitPolicy;
 import com.nexusgate.nexus_gateway.Config.RateLimit.RateLimitResult;
 import com.nexusgate.nexus_gateway.Config.RateLimit.RedisTokenBucket;
 import io.micrometer.core.instrument.MeterRegistry;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.cloud.gateway.filter.GatewayFilter;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
@@ -18,6 +19,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
+@Slf4j
 @Component
 @ConditionalOnProperty(
         name = "rateLimit.enabled",
@@ -86,7 +88,8 @@ public class InnerRateLimitGatewayFilterFactory  extends AbstractGatewayFilterFa
                 .onErrorResume(error ->
                     handleRedisFailure(
                         exchange,
-                        chain
+                        chain,
+                            error
                     )
         );
 
@@ -116,7 +119,14 @@ public class InnerRateLimitGatewayFilterFactory  extends AbstractGatewayFilterFa
         }
         return chain.filter(exchange);
     }
-    private Mono<Void> handleRedisFailure(ServerWebExchange exchange, GatewayFilterChain chain) {
+    private Mono<Void> handleRedisFailure(ServerWebExchange exchange, GatewayFilterChain chain , Throwable error) {
+        log.error(
+                "Redis rate limiter failed. requestId={}, path={}, strategy={}",
+                exchange.getRequest().getId(),
+                exchange.getRequest().getURI().getPath(),
+                nexusConfig.getRateLimit().getRedisFailureStrategy(),
+                error
+        );
         String strategy = nexusConfig.getRateLimit().getRedisFailureStrategy();
         //if strategy is fail open , then we allow request to pass without causing an error! we chose availability over security
         //if fail-closed then we chose security over availability and the request will be rejected
