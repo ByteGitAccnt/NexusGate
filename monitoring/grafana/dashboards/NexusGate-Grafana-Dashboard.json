@@ -1,0 +1,1107 @@
+{
+  "id": null,
+  "uid": "nexusgate-monitoring",
+  "title": "NexusGate — Gateway Monitoring",
+  "description": "Monitoring dashboard for NexusGate, a developer-focused API Gateway platform. Provides visibility into request traffic by service, gateway response times, authentication failures, rate-limit rejections, HTTP outcomes, and JVM health.\n\nMetrics are collected from the gateway through Spring Boot Actuator and Micrometer, scraped by Prometheus, and visualized in Grafana. Use this dashboard to observe gateway behavior, identify potential issues, and validate the impact of traffic and configuration changes during development and testing.",
+  "tags": [
+    "nexusgate",
+    "monitoring"
+  ],
+  "timezone": "browser",
+  "editable": true,
+  "graphTooltip": 0,
+  "liveNow": false,
+  "refresh": "5s",
+  "schemaVersion": 41,
+  "version": 1,
+  "time": {
+    "from": "now-5m",
+    "to": "now"
+  },
+  "timepicker": {
+    "refresh_intervals": [
+      "5s",
+      "10s",
+      "30s",
+      "1m",
+      "5m",
+      "15m",
+      "30m",
+      "1h",
+      "2h",
+      "1d"
+    ]
+  },
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "templating": {
+    "list": [
+      {
+        "name": "Filters",
+        "type": "adhoc",
+        "datasource": {
+          "type": "prometheus",
+          "uid": "prometheus"
+        },
+        "filters": [],
+        "baseFilters": [],
+        "hide": 0,
+        "skipUrlSync": false,
+        "allowCustomValue": true,
+        "enable": true,
+        "label": null,
+        "query": "",
+        "refresh": 1
+      }
+    ]
+  },
+  "links": [],
+  "panels": [
+    {
+      "id": 1,
+      "title": "Requests per Service (Last 1 Minute)",
+      "description": "Number of requests handled by each service over the last 1 minute, grouped by service name.",
+      "type": "table",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 11,
+        "h": 5
+      },
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": 0,
+                "color": "green"
+              },
+              {
+                "value": 80,
+                "color": "red"
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds",
+            "fixedColor": "#ad46ff"
+          },
+          "custom": {
+            "align": "center",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "filterable": false,
+            "footer": {
+              "reducers": []
+            },
+            "inspect": false,
+            "width": 200
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "cellHeight": "sm",
+        "enablePagination": false,
+        "frameIndex": 1,
+        "showHeader": true
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "sum by (service) (\r\n  increase(nexusgate_requests_routed_total[5m])\r\n)",
+          "legendFormat": "{{service}}",
+          "range": false,
+          "format": "table",
+          "instant": true,
+          "exemplar": false
+        }
+      ],
+      "links": []
+    },
+    {
+      "id": 2,
+      "title": "Request Outcomes (Last 5 Minutes)",
+      "description": "Shows the number of requests routed by the gateway over the last 5 minutes, grouped by outcome (e.g., success, client error, or server error), providing an overview of request processing results.",
+      "type": "table",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 14,
+        "y": 5,
+        "w": 10,
+        "h": 5
+      },
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": 0,
+                "color": "green"
+              },
+              {
+                "value": 80,
+                "color": "red"
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds",
+            "fixedColor": "#ad46ff"
+          },
+          "noValue": "0",
+          "custom": {
+            "align": "center",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "footer": {
+              "reducers": []
+            },
+            "inspect": false,
+            "styleField": "Value"
+          },
+          "fieldMinMax": false
+        },
+        "overrides": []
+      },
+      "options": {
+        "cellHeight": "sm",
+        "showHeader": true
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "sum by (outcome) (\r\n  increase(nexusgate_requests_routed_total[5m])\r\n)",
+          "legendFormat": "{{outcome}}",
+          "range": false,
+          "format": "table",
+          "instant": true,
+          "exemplar": false,
+          "interval": ""
+        }
+      ],
+      "links": []
+    },
+    {
+      "id": 3,
+      "title": "Total Requests",
+      "description": "Displays the cumulative number of requests routed through NexusGate since the metric began recording, providing an overview of total gateway traffic.",
+      "type": "stat",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 10,
+        "w": 4,
+        "h": 5
+      },
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": 0,
+                "color": "green"
+              },
+              {
+                "value": 80,
+                "color": "red"
+              }
+            ]
+          },
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "blue"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "none",
+        "graphMode": "area",
+        "justifyMode": "center",
+        "orientation": "horizontal",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": true,
+        "text": {
+          "percentSize": 12,
+          "valueSize": 40
+        },
+        "textMode": "value",
+        "wideLayout": false
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "builder",
+          "expr": "sum by() (nexusgate_requests_routed_total)",
+          "legendFormat": "__auto",
+          "range": true,
+          "instant": false,
+          "exemplar": false
+        }
+      ],
+      "links": []
+    },
+    {
+      "id": 4,
+      "title": "Average Response Time by Service",
+      "description": "Measures the average response time for each service over the last 5 minutes, calculated from the rate of accumulated response time divided by the rate of completed requests. Results are displayed in milliseconds.",
+      "type": "table",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 11,
+        "y": 0,
+        "w": 13,
+        "h": 5
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ms",
+          "decimals": 2,
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": 0,
+                "color": "green"
+              },
+              {
+                "value": 80,
+                "color": "red"
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds",
+            "fixedColor": "#ad46ff"
+          },
+          "noValue": "0",
+          "custom": {
+            "align": "center",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "footer": {
+              "reducers": []
+            },
+            "inspect": false
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "scope": "series",
+              "options": "Time"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 236
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "cellHeight": "sm",
+        "showHeader": true
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "1000 *\r\nsum by (service) (\r\n  rate(nexusgate_response_time_seconds_sum[5m])\r\n)\r\n/\r\nsum by (service) (\r\n  rate(nexusgate_response_time_seconds_count[5m])\r\n)",
+          "legendFormat": "{{service}}",
+          "range": false,
+          "format": "table",
+          "instant": true,
+          "exemplar": false
+        }
+      ],
+      "links": []
+    },
+    {
+      "id": 5,
+      "title": "Server Errors by Service (Last 5 Minutes)",
+      "description": "This shows the estimated number of routed requests resulting in 5xx responses per service over the last five minutes.",
+      "type": "stat",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 8,
+        "y": 10,
+        "w": 4,
+        "h": 5
+      },
+      "fieldConfig": {
+        "defaults": {
+          "decimals": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": 0,
+                "color": "green"
+              },
+              {
+                "value": 80,
+                "color": "red"
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "text": {
+          "percentSize": 15,
+          "valueSize": 30
+        },
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "sum by (service) (\r\n  increase(nexusgate_requests_routed_total{outcome=\"SERVER_ERROR\"}[5m])\r\n)",
+          "legendFormat": "{{service}}",
+          "range": false,
+          "instant": true,
+          "exemplar": false
+        }
+      ],
+      "links": []
+    },
+    {
+      "id": 6,
+      "title": "Average Response Time",
+      "description": "This calculates a request-weighted average across Auth, Product, and Order, rather than averaging the three service averages equally.",
+      "type": "gauge",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 10,
+        "y": 5,
+        "w": 4,
+        "h": 5
+      },
+      "fieldConfig": {
+        "defaults": {
+          "displayName": "2",
+          "unit": "ms",
+          "thresholds": {
+            "mode": "percentage",
+            "steps": [
+              {
+                "value": 0,
+                "color": "green"
+              },
+              {
+                "value": 60,
+                "color": "#EAB839"
+              },
+              {
+                "value": 80,
+                "color": "red"
+              }
+            ]
+          },
+          "color": {
+            "mode": "continuous-GrYlRd"
+          },
+          "noValue": "0",
+          "fieldMinMax": false
+        },
+        "overrides": []
+      },
+      "options": {
+        "barShape": "rounded",
+        "barWidthFactor": 0.4,
+        "effects": {
+          "barGlow": true,
+          "centerGlow": true,
+          "gradient": true
+        },
+        "endpointMarker": "glow",
+        "minVizHeight": 75,
+        "minVizWidth": 75,
+        "neutral": 0,
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "segmentCount": 1,
+        "segmentSpacing": 0.3,
+        "shape": "gauge",
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true,
+        "sizing": "auto",
+        "sparkline": true,
+        "textMode": "value"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "1000 *\r\nsum(rate(nexusgate_response_time_seconds_sum[5m]))\r\n/\r\nsum(rate(nexusgate_response_time_seconds_count[5m]))",
+          "legendFormat": "__auto",
+          "range": false,
+          "instant": true,
+          "exemplar": false
+        }
+      ],
+      "links": []
+    },
+    {
+      "id": 7,
+      "title": "Requests — Last Minute.",
+      "description": "Shows the total number of requests routed through NexusGate over the last 1 minutes.",
+      "type": "stat",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 4,
+        "y": 10,
+        "w": 4,
+        "h": 5
+      },
+      "fieldConfig": {
+        "defaults": {
+          "decimals": 2,
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": 0,
+                "color": "green"
+              },
+              {
+                "value": 80,
+                "color": "red"
+              }
+            ]
+          },
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "blue"
+          },
+          "noValue": "0"
+        },
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "center",
+        "orientation": "horizontal",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": true,
+        "text": {
+          "percentSize": 15,
+          "valueSize": 30
+        },
+        "textMode": "value",
+        "wideLayout": false
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "sum(increase(nexusgate_requests_routed_total[1m]))",
+          "legendFormat": "__auto",
+          "range": true
+        }
+      ],
+      "links": []
+    },
+    {
+      "id": 8,
+      "title": "Authentication Failures - 5m",
+      "description": "Shows the number of authentication failures over the last 5 minutes, grouped by failure reason, helping identify common authentication issues such as missing or invalid headers, invalid tokens, and missing identity claims.",
+      "type": "stat",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 5,
+        "w": 10,
+        "h": 5
+      },
+      "fieldConfig": {
+        "defaults": {
+          "decimals": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": 0,
+                "color": "green"
+              },
+              {
+                "value": 80,
+                "color": "red"
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "horizontal",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "text": {
+          "valueSize": 35
+        },
+        "textMode": "value_and_name",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "sum by (reason) (\r\n  increase(nexusgate_auth_failures_total[5m])\r\n)",
+          "legendFormat": "{{reason}}",
+          "range": false,
+          "instant": true,
+          "exemplar": false
+        }
+      ],
+      "links": []
+    },
+    {
+      "id": 9,
+      "title": "Rate-Limit Rejections",
+      "description": "Shows the number of requests rejected by NexusGate's rate limiters over the last 5 minutes, grouped by limiter type (outer or inner) and rejection reason (limit exceeded or Redis failure).",
+      "type": "table",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 10,
+        "w": 12,
+        "h": 5
+      },
+      "fieldConfig": {
+        "defaults": {
+          "decimals": 0,
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": 0,
+                "color": "green"
+              },
+              {
+                "value": 80,
+                "color": "red"
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds",
+            "fixedColor": "#ad46ff"
+          },
+          "noValue": "0",
+          "custom": {
+            "align": "center",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "filterable": false,
+            "footer": {
+              "reducers": []
+            },
+            "inspect": false
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "cellHeight": "sm",
+        "showHeader": true
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "sum by (limiter, reason) (\r\n  increase(nexusgate_rate_limit_rejections_total[5m])\r\n)",
+          "legendFormat": "{{limiter}} - {{reason}}",
+          "range": false,
+          "format": "table",
+          "instant": true,
+          "exemplar": false
+        }
+      ],
+      "links": []
+    },
+    {
+      "id": 10,
+      "title": "JVM Heap Memory Usage (%)",
+      "description": "Displays the percentage of JVM heap memory currently used across the monitored application instances, calculated as used heap memory divided by the maximum available heap memory. Helps monitor memory consumption and identify potential memory pressure.",
+      "type": "stat",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 15,
+        "w": 8,
+        "h": 3
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "decimals": 1,
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": 0,
+                "color": "green"
+              },
+              {
+                "value": 70,
+                "color": "#EAB839"
+              },
+              {
+                "value": 85,
+                "color": "red"
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          },
+          "noValue": "0"
+        },
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "text": {
+          "valueSize": 35
+        },
+        "textMode": "value",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "100 *\r\nsum(jvm_memory_used_bytes{area=\"heap\"})\r\n/\r\nsum(jvm_memory_max_bytes{area=\"heap\"})",
+          "legendFormat": "__auto",
+          "range": true
+        }
+      ],
+      "links": []
+    },
+    {
+      "id": 11,
+      "title": "Gateway CPU Usage (%)",
+      "description": "Displays the CPU usage of the NexusGate application as a percentage, providing a quick overview of how much processing capacity the gateway is consuming.",
+      "type": "stat",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 8,
+        "y": 15,
+        "w": 8,
+        "h": 3
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "decimals": 1,
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": 0,
+                "color": "green"
+              },
+              {
+                "value": 80,
+                "color": "red"
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "center",
+        "orientation": "horizontal",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "text": {
+          "valueSize": 30
+        },
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "100 *\r\nprocess_cpu_usage",
+          "legendFormat": "__auto",
+          "range": false,
+          "instant": true,
+          "exemplar": false
+        }
+      ],
+      "links": []
+    },
+    {
+      "id": 12,
+      "title": "JVM Live Threads",
+      "description": "Displays the current number of live threads in the NexusGate JVM, providing insight into application concurrency and thread usage.",
+      "type": "stat",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 16,
+        "y": 15,
+        "w": 8,
+        "h": 3
+      },
+      "fieldConfig": {
+        "defaults": {
+          "decimals": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": 0,
+                "color": "green"
+              },
+              {
+                "value": 80,
+                "color": "red"
+              }
+            ]
+          },
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "red"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "center",
+        "orientation": "horizontal",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "text": {
+          "valueSize": 35
+        },
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "jvm_threads_live_threads",
+          "legendFormat": "__auto",
+          "range": false,
+          "instant": true,
+          "exemplar": false
+        }
+      ],
+      "links": []
+    },
+    {
+      "id": 13,
+      "title": "GC Pause Time",
+      "description": "Measures the rate of accumulated garbage collection pause time over the last 5 minutes, grouped by GC action. Helps monitor the time the JVM spends pausing application execution for garbage collection.",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 18,
+        "w": 24,
+        "h": 9
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "value": 0,
+                "color": "green"
+              },
+              {
+                "value": 80,
+                "color": "red"
+              }
+            ]
+          },
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisGridShow": true,
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 9,
+            "gradientMode": "opacity",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineStyle": {
+              "fill": "solid"
+            },
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "showValues": false,
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "table",
+          "overflow": "ellipsis",
+          "placement": "bottom",
+          "showLegend": true,
+          "sortBy": "Name",
+          "sortDesc": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "sum by (action) (\r\n  rate(jvm_gc_pause_seconds_sum[5m])\r\n)",
+          "legendFormat": "{{action}}",
+          "range": true
+        }
+      ],
+      "links": []
+    }
+  ]
+}
