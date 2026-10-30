@@ -1,0 +1,57 @@
+
+services:
+  # Redis provides shared state for NexusGate's rate limiter.
+  nexusgate-redis:
+    # Official Redis 7 image.
+    image: redis:7
+
+    # Explicit container name for easier Docker CLI management.
+    container_name: nexusgate-redis
+
+    # Restart automatically unless manually stopped.
+    restart: unless-stopped
+
+    # Wait for Redis to respond before starting NexusGate.
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+    # No host port is published.
+    # NexusGate reaches Redis over the internal Compose network.
+
+  # NexusGate is the single entry point for client API requests.
+  nexusgate:
+    # Versioned gateway image.
+    image: nexusgate:v1
+
+    # Explicit container name for easier management.
+    container_name: nexusgate
+
+    # Restart automatically unless manually stopped.
+    restart: unless-stopped
+
+    # Expose the gateway on the host machine.
+    # Clients can access it at http://localhost:8080.
+    ports:
+      - "8080:8080"
+
+    # Configuration read by NexusGate from environment variables.
+    environment:
+      # Must match the Redis service name below.
+      REDIS_HOST: ${REDIS_HOST:-nexusgate-redis}
+      REDIS_PORT: ${REDIS_PORT:-6379}
+      JWT_SECRET: ${JWT_SECRET}
+
+      # Provide this if required by your existing JWT configuration.
+      # Prefer a .env file excluded from Git or another secrets mechanism.
+      # JWT_SECRET: ${JWT_SECRET}
+    volumes:
+      # User-provided NexusGate configuration
+      - ./nexus.yml:/app/nexus.yml:ro
+
+    # Start the gateway after Redis reports healthy.
+    depends_on:
+      nexusgate-redis:
+        condition: service_healthy

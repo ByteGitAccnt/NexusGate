@@ -11,7 +11,7 @@ import org.springframework.stereotype.Component;
         name = "rateLimit.enabled",
         havingValue = "true"
 )
-public class NexusRedisConnectionDetails implements DataRedisConnectionDetails.Standalone {
+public class NexusRedisConnectionDetails implements DataRedisConnectionDetails, DataRedisConnectionDetails.Standalone {
 // we are overriding the redis's data connection details to push our host and other port details
     // we don't need an explicit bean for ReactiveRedisTemplate as spring will automatically create it for us and consume the custom details we are providing.
     private final NexusConfig nexusConfig;
@@ -19,6 +19,11 @@ public class NexusRedisConnectionDetails implements DataRedisConnectionDetails.S
     public NexusRedisConnectionDetails(NexusConfig nexusConfig) {
         // we import the custom details from the nexus config and push it to the redis connection details
         this.nexusConfig = nexusConfig;
+    }
+    // now the spring boot will use this custom connection details to connect to the redis server instead of the default localhost
+    @Override
+    public DataRedisConnectionDetails.Standalone getStandalone() {
+        return this;
     }
 
     @Override

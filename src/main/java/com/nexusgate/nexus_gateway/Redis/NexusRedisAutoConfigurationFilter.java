@@ -4,7 +4,7 @@ import org.springframework.boot.autoconfigure.AutoConfigurationImportFilter;
 import org.springframework.boot.autoconfigure.AutoConfigurationMetadata;
 import org.springframework.context.EnvironmentAware;
 import org.springframework.core.env.Environment;
-
+//enable or disable redis auto configurations based on the property rateLimit.enabled in nexus.yml file
 public class NexusRedisAutoConfigurationFilter implements AutoConfigurationImportFilter, EnvironmentAware {
 
     private Environment environment;
