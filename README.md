@@ -93,11 +93,10 @@ This diagram illustrates how incoming requests are processed
 by NexusGate, including routing, authentication, rate limiting,
 logging, and forwarding.
 
-![NexusGate Request Processing Flow](docs/images/request-flow.svg)
+![NexusGate Request Processing Flow](docs/images/request-flow.png)
 ### 2. Infrastructure Architecture
 
-[Infrastructure Mermaid diagram]
-```
+![NexusGate Infrastructure Architecture Flow](docs/images/infrastructure-flow.png)
 
 ## Prerequisites
 
