@@ -485,65 +485,89 @@ Public endpoints can be accessed without a token. If a client provides a Bearer 
 ## Project structure
 
 ```text
-nexus-gateway/
-├── src/
-│   ├── main/
-│   │   ├── java/com/nexusgate/nexus_gateway/
-│   │   │   ├── Config/
-│   │   │   │   ├── Logging/
-│   │   │   │   │   ├── LoggingConfig.java
-│   │   │   │   │   └── LoggingFields.java
-│   │   │   │   ├── RateLimit/
-│   │   │   │   │   ├── RateLimitConfig.java
-│   │   │   │   │   ├── RateLimitPolicy.java
-│   │   │   │   │   └── RedisTokenBucket.java
-│   │   │   │   ├── Security/
-│   │   │   │   │   ├── HmacJwtTokenVerifier.java
-│   │   │   │   │   ├── JwtConfig.java
-│   │   │   │   │   ├── JwtTokenVerifier.java
-│   │   │   │   │   ├── JwtVerificationConfig.java
-│   │   │   │   │   └── SecurityConfig.java
-│   │   │   │   ├── management/
-│   │   │   │   │   ├── ManagementConfig.java
-│   │   │   │   │   └── ManagementServiceConfig.java
-│   │   │   │   ├── Metrics/
-│   │   │   │   │   ├── MonitoringConfig.java
-│   │   │   │   │   └── CustomMetricRegistry.java
-│   │   │   │   ├── EnvironmentVariableResolver.java
-│   │   │   │   ├── NexusConfig.java
-│   │   │   │   ├── NexusConfigLoader.java
-│   │   │   │   ├── NexusConfigTestRunner.java
-│   │   │   │   ├── NexusEnvironmentPostProcessor.java
-│   │   │   │   ├── NexusRouteBuilder.java
-│   │   │   │   ├── NexusSpringConfig.java
-│   │   │   │   ├── SecurityConfig.java
-│   │   │   │   ├── ServiceConfig.java
-│   │   │   ├── Filter/
-│   │   │   │   ├── InnerRateLimitGatewayFilterFactory.java
-│   │   │   │   ├── JwtAuthenticationGatewayFilterFactory.java
-│   │   │   │   ├── LoggingGatewayFilter.java
-│   │   │   │   ├── ManagementEndpointGatewayFilterFactory.java
-│   │   │   │   └── OuterRateLimitFilter.java
-│   │   │   ├── Redis/
-│   │   │   │   ├── NexusRedisAutoConfigurationFilter.java
-│   │   │   │   ├── NexusRedisConnectionDetails.java
-│   │   │   │   └── RedisConfig.java
-│   │   │   ├── docs/
-│   │   │   │   └── configuration.md
-│   │   │   └── NexusGatewayApplication.java
-│   │   └── resources/
-│   │       ├── META-INF/
-│   │       └── prometheus.yml
-│   └── test/java/com/nexusgate/nexus_gateway/
-├── build.gradle
-├── gradlew
-├── gradlew.bat
-├── HELP.md
-├── nexus.yml
-├── prometheus.yml
-├── README.md
-├── settings.gradle
-└── src/test/
+Directory structure:
+└── nexus-gateway/
+    ├── README.md
+    ├── compose.monitoring.yml
+    ├── compose.standalone-monitoring.yml
+    ├── compose.yml
+    ├── Dockerfile
+    ├── gradlew
+    ├── gradlew.bat
+    ├── nexus.yml
+    ├── .dockerignore
+    ├── .env.example
+    ├── docs/
+    │   └── configuration.md
+    ├── gradle/
+    │   └── wrapper/
+    │       └── gradle-wrapper.properties
+    ├── monitoring/
+    │   ├── grafana/
+    │   │   ├── dashboards/
+    │   │   │   └── NexusGate-Grafana-Dashboard.json
+    │   │   └── provisioning/
+    │   │       ├── dashboards/
+    │   │       │   └── dashboards.yml
+    │   │       └── datasources/
+    │   │           └── prometheus.yml
+    │   └── prometheus/
+    │       └── prometheus.yml
+    └── src/
+        ├── main/
+        │   ├── java/
+        │   │   └── com/
+        │   │       └── nexusgate/
+        │   │           └── nexus_gateway/
+        │   │               ├── NexusGatewayApplication.java
+        │   │               ├── Config/
+        │   │               │   ├── EnvironmentVariableResolver.java
+        │   │               │   ├── NexusConfig.java
+        │   │               │   ├── NexusConfigLoader.java
+        │   │               │   ├── NexusEnvironmentPostProcessor.java
+        │   │               │   ├── NexusRouteBuilder.java
+        │   │               │   ├── NexusSpringConfig.java
+        │   │               │   ├── SecurityConfig.java
+        │   │               │   ├── ServiceConfig.java
+        │   │               │   ├── Logging/
+        │   │               │   │   ├── LoggingConfig.java
+        │   │               │   │   └── LoggingFields.java
+        │   │               │   ├── management/
+        │   │               │   │   ├── ManagementConfig.java
+        │   │               │   │   └── ManagementServiceConfig.java
+        │   │               │   ├── Monitoring/
+        │   │               │   │   └── MonitoringConfig.java
+        │   │               │   ├── RateLimit/
+        │   │               │   │   ├── ClientIpResolver.java
+        │   │               │   │   ├── RateLimitConfig.java
+        │   │               │   │   ├── RateLimitKeyGenerator.java
+        │   │               │   │   ├── RateLimitPolicy.java
+        │   │               │   │   ├── RateLimitResult.java
+        │   │               │   │   └── RedisTokenBucket.java
+        │   │               │   └── Security/
+        │   │               │       ├── HmacJwtTokenVerifier.java
+        │   │               │       ├── JwtConfig.java
+        │   │               │       ├── JwtTokenVerifier.java
+        │   │               │       ├── JwtVerificationConfig.java
+        │   │               │       └── SecurityConfig.java
+        │   │               ├── Filter/
+        │   │               │   ├── InnerRateLimitGatewayFilterFactory.java
+        │   │               │   ├── JwtAuthenticationGatewayFilterFactory.java
+        │   │               │   ├── LoggingGatewayFilter.java
+        │   │               │   ├── ManagementEndpointGatewayFilterFactory.java
+        │   │               │   └── OuterRateLimitFilter.java
+        │   │               └── Redis/
+        │   │                   ├── NexusRedisAutoConfigurationFilter.java
+        │   │                   ├── NexusRedisConnectionDetails.java
+        │   │                   └── RedisConfig.java
+        │   └── resources/
+        │       ├── application.yaml
+        │       ├── META-INF/
+        │       │   └── spring.factories
+        │       └── redis/
+        │           └── token_bucket.lua
+        └── test/
+
 ```
 
 ## Running the application
