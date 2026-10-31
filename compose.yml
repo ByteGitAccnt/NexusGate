@@ -35,18 +35,18 @@ services:
     # Expose the gateway on the host machine.
     # Clients can access it at http://localhost:8080.
     ports:
-      - "8080:8080"
+      - "${SERVER_PORT:-8080}:8080"
 
     # Configuration read by NexusGate from environment variables.
     environment:
       # Must match the Redis service name below.
+      SERVER_PORT: ${SERVER_PORT:-8080}
+      # Redis configuration
       REDIS_HOST: ${REDIS_HOST:-nexusgate-redis}
       REDIS_PORT: ${REDIS_PORT:-6379}
-      JWT_SECRET: ${JWT_SECRET}
+      # JWT configuration
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET must be configured in .env}
 
-      # Provide this if required by your existing JWT configuration.
-      # Prefer a .env file excluded from Git or another secrets mechanism.
-      # JWT_SECRET: ${JWT_SECRET}
     volumes:
       # User-provided NexusGate configuration
       - ./nexus.yml:/app/nexus.yml:ro
