@@ -1,7 +1,10 @@
-﻿# Nexus Gateway
+﻿## NexusGate – Developer-Focused API Gateway
 
-A reactive Spring Cloud Gateway server providing API gateway and reverse proxy capabilities for microservices routing. NexusGate is the single entry point for client applications, routing requests to multiple downstream microservices with JWT authentication, service-specific public endpoints, and centralized management endpoint access.
+NexusGate is a self-hosted, configuration-driven API Gateway built with Java, Spring Boot, and Spring Cloud Gateway.
 
+It provides a centralized entry point for client applications, handling request routing, JWT authentication, Redis-backed rate limiting, request logging, and monitoring.
+
+Designed for developers, small teams, and personal projects, NexusGate provides essential API gateway capabilities through a YAML-based configuration, without requiring a complex infrastructure setup.
 ## 📋 Table of Contents
 
 - [Overview](#overview)
@@ -36,8 +39,7 @@ A reactive Spring Cloud Gateway server providing API gateway and reverse proxy c
 
 ## 🎯 Overview
 
-**NexusGate** is the central API Gateway component of the Nexus microservices architecture. It provides:
-
+**NexusGate** acts as the centralized entry point for applications communicating with multiple downstream services.
 - **Reverse proxy and request routing** to downstream microservices
 - **YAML-based service configuration** for flexible deployment
 - **Security master switch** to enable or disable all gateway security checks
@@ -53,7 +55,7 @@ The gateway is built using **Spring Cloud Gateway** with reactive (WebFlux) prog
 
 ### ⚠️ Important Note: Responsibility Boundaries
 
-**NexusGate is an API Gateway and reverse proxy.** The example services and ports (Auth Service on port 8081, Product Service on port 8083, Order Service on port 8082) shown throughout this documentation are for development and debugging purposes only. **for development and debugging purposes only**.
+**NexusGate is an API Gateway and reverse proxy.** The example services and ports (Auth Service on port 8081, Product Service on port 8083, Order Service on port 8082) shown throughout this documentation are **for development and debugging purposes only**.
 
 **Critical Responsibilities:**
 
@@ -82,22 +84,19 @@ The gateway is built using **Spring Cloud Gateway** with reactive (WebFlux) prog
 - reactive Spring Cloud Gateway implementation
 
 ## Architecture
+NexusGate follows a centralized API Gateway architecture,
+providing a single entry point for client applications.
 
-```text
-Client Request
-    ↓
-NexusGate
-    ├─ Match service route
-    ├─ Check public endpoint rules
-    ├─ Verify JWT when required
-    ├─ Extract identity claim
-    ├─ Apply outer/inner rate limits
-    ├─ Rewrite management paths
-    └─ Forward to downstream service
-    ↓
-Downstream Service
-    ↓
-Response → NexusGate → Client
+### 1. Request Processing Architecture
+
+This diagram illustrates how incoming requests are processed
+by NexusGate, including routing, authentication, rate limiting,
+logging, and forwarding.
+
+![NexusGate Request Processing Flow](docs/images/request-flow.svg)
+### 2. Infrastructure Architecture
+
+[Infrastructure Mermaid diagram]
 ```
 
 ## Prerequisites
@@ -288,12 +287,40 @@ security:
     audience: nexusgate
 ```
 
-`security.enabled` is the master switch for gateway authentication. When it is `false`, the JWT gateway filter is not active and the gateway effectively skips JWT enforcement for protected routes. `security.jwt.enabled` allows the JWT verification layer itself to be disabled while leaving the broader security configuration visible in the YAML.
+### Security Configuration
 
-NexusGate validates the token signature and the expected issuer and audience values. It then extracts the configured identity claim and uses it as the authenticated principal for downstream propagation.
+NexusGate provides configurable JWT authentication through two security switches.
 
-NexusGate does not issue or manage access tokens. The Auth Service handles token issuance, refresh flows, expiration, and refresh-token rotation.
+- **`security.enabled`** acts as the master switch for gateway security enforcement. When set to `false`, the JWT gateway filter is not activated, and the gateway skips JWT enforcement for protected routes.
+- **`security.jwt.enabled`** controls JWT verification independently within the broader security configuration. When set to `false`, JWT verification is disabled even if the master security switch remains enabled.
 
+The effective behaviour is determined by both settings:
+
+| `security.enabled` | `security.jwt.enabled` | Behaviour |
+|---|---|---|
+| `false` | `true` | Security enforcement is disabled |
+| `false` | `false` | Security enforcement is disabled |
+| `true` | `false` | JWT verification is disabled |
+| `true` | `true` | JWT verification is active |
+
+When JWT verification is enabled, NexusGate:
+
+1. Validates the JWT signature.
+2. Verifies the expected issuer and audience values.
+3. Extracts the configured identity claim.
+4. Uses the extracted identity as the authenticated principal as `X-Principal` for downstream propagation.
+
+**Token Management Responsibility**
+
+NexusGate is responsible for validating incoming access tokens, not issuing or managing them.
+
+The Auth Service handles:
+- Access token generation and issuance.
+- Refresh token validation.
+- Token expiration management.
+- Refresh token rotation and new access token issuance.
+
+NexusGate and the Auth Service therefore have separate security responsibilities: the Auth Service issues tokens, while NexusGate validates them before forwarding authenticated requests to downstream services.
 ### Logging configuration
 
 ```yaml
@@ -323,7 +350,7 @@ monitoring:
   enabled: true
 ```
 
-When `monitoring.enabled` is `true`, the gateway initializes its metric collection and exposes a Prometheus scrape endpoint at /management/prometheus (default). A sample Prometheus configuration for local testing is included at src/main/resources/prometheus.yml. Advanced metric registry wiring (custom metric registry and exporter behavior) is implemented in code and not currently exposed as nested keys in nexus.yml.
+When `monitoring.enabled` is `true`, the gateway initializes its metric collection and exposes a Prometheus scrape endpoint at /actuator/prometheus (default). A sample Prometheus configuration for local testing is included at src/main/resources/prometheus.yml. Advanced metric registry wiring (custom metric registry and exporter behavior) is implemented in code and not currently exposed as nested keys in nexus.yml.
 
 ## Rate limiting
 
