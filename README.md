@@ -481,6 +481,32 @@ services:
 ```
 
 Public endpoints can be accessed without a token. If a client provides a Bearer token on a public endpoint, NexusGate still validates it. An invalid or malformed token is rejected with `401 Unauthorized`.
+##  Docker Deployment
+
+NexusGate provides a separate Docker deployment template repository to simplify setup and deployment.
+
+The deployment repository includes preconfigured Docker Compose files for different deployment modes, allowing developers to choose the setup that best fits their requirements.
+
+**Available deployment options:**
+
+- **Standalone Gateway:** Run NexusGate independently without Redis or monitoring.
+- **Gateway + Redis:** Run NexusGate with Redis for rate limiting.
+- **Gateway + Redis + Monitoring:** Deploy NexusGate, Redis, Prometheus, and Grafana together.
+- **Gateway + Monitoring:** Run NexusGate with Prometheus and Grafana without Redis.
+
+The repository also provides:
+- Environment variable templates (`.env.example`).
+- Gateway configuration examples (`nexus.yml`).
+- Prometheus configuration.
+- Preconfigured Grafana dashboards and provisioning.
+- Deployment instructions and configuration documentation.
+
+### Deployment Repository
+
+**[NexusGate Deployment Template](https://github.com/ByteGitAccnt/nexusgate-deployment)**
+
+Refer to the deployment repository's README and documentation for setup instructions, configuration details, and available deployment modes.
+
 
 ## Project structure
 
