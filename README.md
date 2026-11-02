@@ -31,6 +31,7 @@ Designed for developers, small teams, and personal projects, NexusGate provides 
   - [Redis behavior](#redis-behavior)
   - [Client-visible rate-limit responses](#client-visible-rate-limit-responses)
 - [Public endpoints](#public-endpoints)
+- [Docker Deployment](#docker-deployment)
 - [Project structure](#project-structure)
 - [Running the application](#running-the-application)
 - [API routing examples](#api-routing-examples)
