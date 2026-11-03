@@ -5,6 +5,7 @@ NexusGate is a self-hosted, configuration-driven API Gateway built with Java, Sp
 It provides a centralized entry point for client applications, handling request routing, JWT authentication, Redis-backed rate limiting, request logging, and monitoring.
 
 Designed for developers, small teams, and personal projects, NexusGate provides essential API gateway capabilities through a YAML-based configuration, without requiring a complex infrastructure setup.
+
 ## 📋 Table of Contents
 
 - [Overview](#overview)
@@ -30,6 +31,7 @@ Designed for developers, small teams, and personal projects, NexusGate provides 
   - [Token bucket behavior](#token-bucket-behavior)
   - [Redis behavior](#redis-behavior)
   - [Client-visible rate-limit responses](#client-visible-rate-limit-responses)
+- [Monitoring & Observability](#Monitoring-and-Observability)
 - [Public endpoints](#public-endpoints)
 - [Docker Deployment](#docker-deployment)
 - [Project structure](#project-structure)
@@ -41,11 +43,12 @@ Designed for developers, small teams, and personal projects, NexusGate provides 
 ## 🎯 Overview
 
 **NexusGate** acts as the centralized entry point for applications communicating with multiple downstream services.
+
 - **Reverse proxy and request routing** to downstream microservices
 - **YAML-based service configuration** for flexible deployment
 - **Security master switch** to enable or disable all gateway security checks
 - **JWT authentication** with configurable identity claims and optional per-service public endpoints
-- **rate limiting** Redis-backed token-bucket rate limiting
+- **Rate limiting** Redis-backed token-bucket rate limiting with separate IP-based and user-based limiters
 - **Service-specific public endpoints** with optional JWT verification
 - **Centralized management endpoint routing** with per-service overrides
 - **Request logging** with configurable fields and request IDs
@@ -149,7 +152,7 @@ NexusGate reads its routing and security configuration from `nexus.yml`. The fil
 - Redis configuration
 - rate-limit configuration
 
-See [Configuration Guide](./src/main/java/com/nexusgate/nexus_gateway/docs/configuration.md) for the detailed reference.
+See [Configuration Guide](./docs/configuration.md) for the detailed reference.
 
 ### Example configuration
 
@@ -212,8 +215,8 @@ rateLimit:
   inner:
     enabled: true
     algorithm: token-bucket
-    capacity: 100
-    refillRate: 100
+    capacity: 60
+    refillRate: 60
     refillPeriodSeconds: 60
 
 logging:
@@ -321,6 +324,7 @@ The Auth Service handles:
 - Refresh token rotation and new access token issuance.
 
 NexusGate and the Auth Service therefore have separate security responsibilities: the Auth Service issues tokens, while NexusGate validates them before forwarding authenticated requests to downstream services.
+
 ### Logging configuration
 
 ```yaml
@@ -350,7 +354,7 @@ monitoring:
   enabled: true
 ```
 
-When `monitoring.enabled` is `true`, the gateway initializes its metric collection and exposes a Prometheus scrape endpoint at /actuator/prometheus (default). A sample Prometheus configuration for local testing is included at src/main/resources/prometheus.yml. Advanced metric registry wiring (custom metric registry and exporter behavior) is implemented in code and not currently exposed as nested keys in nexus.yml.
+When `monitoring.enabled` is `true`, the gateway initializes its metric collection and exposes a Prometheus scrape endpoint at /actuator/prometheus (default). A sample Prometheus configuration for local testing is included at monitoring/prometheus/prometheus.yml. Advanced metric registry wiring (custom metric registry and exporter behavior) is implemented in code and not currently exposed as nested keys in nexus.yml.
 
 ## Rate limiting
 
@@ -461,11 +465,53 @@ Retry-After: <seconds>
 Example:
 
 ```text
-X-RateLimit-Limit: 6
+X-RateLimit-Limit: 60
 X-RateLimit-Remaining: 0
 Retry-After: 54
 ```
 
+## Monitoring and Observability
+
+NexusGate integrates **Spring Boot Actuator, Prometheus, and Grafana** to provide visibility into gateway traffic, request processing performance, security events, and JVM health.
+
+### Monitoring Architecture
+
+- **Spring Boot Actuator:** Exposes application and JVM metrics through the Prometheus metrics endpoint.
+- **Prometheus:** Periodically collects metrics from NexusGate.
+- **Grafana:** Uses Prometheus as its data source to visualize gateway metrics through a preconfigured dashboard.
+
+### Grafana Dashboard
+
+The preconfigured NexusGate dashboard provides insights into the following areas:
+
+**1. Traffic Monitoring**
+- Requests per Service (Last 1 Minute)
+- Requests — Last Minute
+- Total Requests
+- Request Outcomes (Last 5 Minutes)
+
+**2. Performance Monitoring**
+- Average Response Time by Service
+- Average Response Time (Request-Weighted)
+- Server Errors by Service (Last 5 Minutes)
+
+**3. Security & Rate-Limiting Monitoring**
+- Authentication Failures (Last 5 Minutes), grouped by failure reason.
+- Rate-Limit Rejections (Last 5 Minutes), grouped by limiter type and rejection reason.
+
+**4. JVM & Application Health**
+- JVM Heap Memory Usage (%)
+- Gateway CPU Usage (%)
+- JVM Live Threads
+- Garbage Collection Pause Time
+
+These dashboards help developers understand traffic patterns, identify slow downstream services, investigate authentication and rate-limiting issues, and monitor application resource consumption.
+
+### Monitoring Stack
+
+Spring Boot Actuator + Prometheus + Grafana.
+![NexusGate Monitoring Dashboard](docs/images/monitoring_dashboard.png)
+For monitoring configuration details, see the `monitoring` section and configuration file in `/docs/configuration.md` .
 ## Public endpoints
 
 A service may declare public endpoints that do not require JWT authentication.
@@ -480,13 +526,18 @@ services:
       - /register
       - /refresh
 ```
-
 Public endpoints can be accessed without a token. If a client provides a Bearer token on a public endpoint, NexusGate still validates it. An invalid or malformed token is rejected with `401 Unauthorized`.
-##  Docker Deployment
+## Docker Deployment
 
-NexusGate provides a separate Docker deployment template repository to simplify setup and deployment.
+NexusGate includes Docker support in the main repository, with a `Dockerfile` and multiple Docker Compose configurations for different deployment scenarios.
 
-The deployment repository includes preconfigured Docker Compose files for different deployment modes, allowing developers to choose the setup that best fits their requirements.
+These files can be used directly to build and run NexusGate:
+
+- `compose.yml` – Gateway with Redis.
+- `compose.monitoring.yml` – Adds Prometheus and Grafana to the Redis-based deployment.
+- `compose.standalone-monitoring.yml` – Gateway with Prometheus and Grafana, without Redis.
+
+For a more structured deployment experience, NexusGate also provides a **dedicated Docker deployment template repository** with preconfigured deployment files, environment variable templates, Grafana dashboards, Prometheus configuration, and detailed setup documentation.
 
 **Available deployment options:**
 
@@ -495,16 +546,11 @@ The deployment repository includes preconfigured Docker Compose files for differ
 - **Gateway + Redis + Monitoring:** Deploy NexusGate, Redis, Prometheus, and Grafana together.
 - **Gateway + Monitoring:** Run NexusGate with Prometheus and Grafana without Redis.
 
-The repository also provides:
-- Environment variable templates (`.env.example`).
-- Gateway configuration examples (`nexus.yml`).
-- Prometheus configuration.
-- Preconfigured Grafana dashboards and provisioning.
-- Deployment instructions and configuration documentation.
-
 ### Deployment Repository
 
 **[NexusGate Deployment Template](https://github.com/ByteGitAccnt/nexusgate-deployment)**
+
+Both the Docker files in the main repository and the dedicated deployment template can be used to deploy NexusGate. However, for detailed setup instructions, configuration guidance, and a smoother deployment experience, **the dedicated deployment template repository is recommended.**
 
 Refer to the deployment repository's README and documentation for setup instructions, configuration details, and available deployment modes.
 
@@ -512,8 +558,7 @@ Refer to the deployment repository's README and documentation for setup instruct
 ## Project structure
 
 ```text
-Directory structure:
-└── nexus-gateway/
+ nexus-gateway/
     ├── README.md
     ├── compose.monitoring.yml
     ├── compose.standalone-monitoring.yml
@@ -554,7 +599,7 @@ Directory structure:
         │   │               │   ├── NexusEnvironmentPostProcessor.java
         │   │               │   ├── NexusRouteBuilder.java
         │   │               │   ├── NexusSpringConfig.java
-        │   │               │   ├── SecurityConfig.java
+        │   │               │   ├── NexusSecurityConfig.java
         │   │               │   ├── ServiceConfig.java
         │   │               │   ├── Logging/
         │   │               │   │   ├── LoggingConfig.java
@@ -627,4 +672,4 @@ The actual downstream target depends on the `url` and `path` values in `nexus.ym
 
 ## Support
 
-For gateway configuration questions, review `nexus.yml` and the configuration guide in `src/main/java/com/nexusgate/nexus_gateway/docs/configuration.md`.
+For gateway configuration questions, review `nexus.yml` and the configuration guide in `/docs/configuration.md`.

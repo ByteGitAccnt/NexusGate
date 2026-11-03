@@ -125,7 +125,7 @@ info
 
 are globally available.
 
-Service-level overrides can restrict access further:
+A service-level `management.endpoints` list replaces the global list for that service. Services without one use the global list:
 
 ```yaml
 product:
@@ -145,7 +145,7 @@ order:
 
 means Order exposes only `metrics`.
 
-This allows gateway management access to be controlled per service instead of exposing every actuator endpoint globally.
+This allows gateway management access to be controlled per service instead of exposing the same actuator endpoints for every service.
 
 ## 3. JWT security configuration
 
@@ -290,7 +290,7 @@ rateLimit:
   redisTimeoutMs: 1000
 
   outer:
-    enabled: false
+    enabled: true
     algorithm: token-bucket
     capacity: 100
     refillRate: 100
@@ -334,7 +334,7 @@ rateLimit:
 
 Redis is required because the rate-limit state is stored in Redis.
 
-## 6. Redis failure strategy
+### Redis failure strategy
 
 ```yaml
 redisFailureStrategy: fail-closed
@@ -342,7 +342,7 @@ redisFailureStrategy: fail-closed
 
 This controls what happens when Redis becomes unavailable while NexusGate is running.
 
-### `fail-closed`
+#### `fail-closed`
 
 ```text
 Redis unavailable
@@ -354,7 +354,7 @@ Rate-limit operation cannot be completed
 
 The request is rejected because NexusGate cannot safely enforce the configured rate limit.
 
-### `fail-open`
+#### `fail-open`
 
 ```text
 Redis unavailable
@@ -370,7 +370,7 @@ This allows downstream traffic to continue when Redis is unavailable.
 
 This setting affects runtime Redis failures. It does not mean Redis is optional when `rateLimit.enabled=true`.
 
-## 7. Redis command timeout
+### Redis command timeout
 
 ```yaml
 redisTimeoutMs: 1000
@@ -390,7 +390,7 @@ The timeout allows NexusGate to quickly apply the configured `fail-open` or `fai
 
 Lettuce may continue its background Redis reconnection process independently.
 
-## 8. Outer rate limiter
+### Outer rate limiter
 
 ```yaml
 outer:
@@ -425,7 +425,7 @@ enabled: true
 
 The setting remains available so it can be disabled or tuned independently later.
 
-## 9. Inner rate limiter
+### Inner rate limiter
 
 ```yaml
 inner:
@@ -457,15 +457,15 @@ User B → nexusgate:ratelimit:user:73
 
 A request from User A consuming all of User A's tokens does not consume User B's tokens.
 
-## 10. Token bucket parameters
+### Token bucket parameters
 
 Both outer and inner limiters use the token-bucket algorithm.
 
-### `capacity`
+#### `capacity`
 
 The maximum number of tokens the bucket can hold.
 
-Example:
+Example (illustrative value, not the current configuration):
 
 ```yaml
 capacity: 6
@@ -473,11 +473,11 @@ capacity: 6
 
 A newly created bucket can therefore initially allow a burst of up to 6 requests.
 
-### `refillRate`
+#### `refillRate`
 
 Defines how many tokens are regenerated during the configured refill period.
 
-Example:
+Example (illustrative values, not the current configuration):
 
 ```yaml
 refillRate: 1
@@ -490,13 +490,37 @@ means:
 1 token every 60 seconds
 ```
 
-### Lazy refill
+#### Lazy refill
 
 NexusGate does not run a background job to continuously refill every bucket.
 
 Instead, tokens are calculated when a request arrives. This keeps the implementation lightweight and avoids unnecessary background processing.
 
-## 11. Redis configuration
+### Rate limit response headers
+
+When rate limiting is active, NexusGate provides:
+
+```text
+X-RateLimit-Limit
+X-RateLimit-Remaining
+```
+
+When a request is rejected because the bucket has no available token:
+
+```text
+HTTP 429 Too Many Requests
+Retry-After: <seconds>
+```
+
+Example:
+
+```text
+X-RateLimit-Limit: 60
+X-RateLimit-Remaining: 0
+Retry-After: 54
+```
+
+## 6. Redis configuration
 
 ```yaml
 redis:
@@ -541,31 +565,7 @@ Redis infrastructure required
 
 This makes Redis an optional dependency for users who choose not to use NexusGate's rate limiting.
 
-## 12. Rate limit response headers
-
-When rate limiting is active, NexusGate provides:
-
-```text
-X-RateLimit-Limit
-X-RateLimit-Remaining
-```
-
-When a request is rejected because the bucket has no available token:
-
-```text
-HTTP 429 Too Many Requests
-Retry-After: <seconds>
-```
-
-Example:
-
-```text
-X-RateLimit-Limit: 6
-X-RateLimit-Remaining: 0
-Retry-After: 54
-```
-
-## 13. Current configuration summary
+## 7. Current configuration summary
 
 The current example configuration means:
 
@@ -586,7 +586,7 @@ Redis timeout          → 1 second
 
 The configuration is intentionally flexible: individual rate-limit layers can be enabled or disabled while the master `rateLimit.enabled` switch controls whether the rate-limiting subsystem itself is active.
 
-## 14. Monitoring configuration
+## 8. Monitoring configuration
 
 ```yaml
 monitoring:
@@ -594,8 +594,8 @@ monitoring:
 ```
 
 - `monitoring.enabled` is the single master switch in nexus.yml. When `true` the gateway initializes metrics collection and exposes a Prometheus scrape endpoint at the default path `/management/prometheus`.
-- A sample Prometheus configuration for local testing is included at `src/main/resources/prometheus.yml`.
-- The gateway contains a custom metric registry and Prometheus exporter wiring in the codebase (see the Metrics package), but advanced exporter options are managed in code and are not exposed as nested YAML keys in `nexus.yml`.
+- A sample Prometheus configuration for local testing is included at `monitoring/prometheus/prometheus.yml`.
+- The gateway contains a custom metric registry and Prometheus exporter wiring in the codebase, but advanced exporter options are managed in code and are not exposed as nested YAML keys in `nexus.yml`.
 
 ## Summary
 

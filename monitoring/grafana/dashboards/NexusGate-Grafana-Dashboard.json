@@ -696,9 +696,9 @@
     },
     {
       "id": 9,
-      "title": "Rate-Limit Rejections",
-      "description": "Shows the number of requests rejected by NexusGate's rate limiters over the last 5 minutes, grouped by limiter type (outer or inner) and rejection reason (limit exceeded or Redis failure).",
-      "type": "table",
+        "title": "Rate-Limit Rejections",
+        "description": "Shows the number of requests rejected by NexusGate's rate limiters over the last 5 minutes, grouped by limiter type (outer or inner) and rejection reason (limit exceeded or Redis failure).",
+        "type": "table",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"

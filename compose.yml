@@ -24,8 +24,7 @@ services:
   # NexusGate is the single entry point for client API requests.
   nexusgate:
     # Versioned gateway image.
-    image: nexusgate:v1
-
+    image: nexusgate:1.0.0
     # Explicit container name for easier management.
     container_name: nexusgate
 

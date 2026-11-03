@@ -3,7 +3,7 @@ services:
 
   # NexusGate gateway without Redis dependency.
   nexusgate:
-    image: nexusgate:v1
+    image: nexusgate:1.0.0
     container_name: nexusgate
     restart: unless-stopped
 
