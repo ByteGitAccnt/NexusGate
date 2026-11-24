@@ -136,15 +136,23 @@ public class LoggingGatewayFilter implements GlobalFilter, Ordered {
                                 "service", serviceName,
                                 "outcome", outcome
                         ).increment();
-                        if (nexusConfig.getMonitoring().isEnabled()) {
-                            Timer.builder("nexusgate.response.time")
+//                        if (nexusConfig.getMonitoring().isEnabled()) {
+//                            Timer.builder("nexusgate.response.time")
+//                                    .tag("service", serviceName)
+//                                    .register(metricRegistry)
+//                                    .record(
+//                                            System.nanoTime() - metricStartTime,
+//                                            TimeUnit.NANOSECONDS
+//                                    );
+//                        }
+
+                        Timer.builder("nexusgate.response.time")
                                     .tag("service", serviceName)
                                     .register(metricRegistry)
                                     .record(
                                             System.nanoTime() - metricStartTime,
                                             TimeUnit.NANOSECONDS
                                     );
-                        }
                     }
 
                 });
